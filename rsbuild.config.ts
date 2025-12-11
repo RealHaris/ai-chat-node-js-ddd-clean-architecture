@@ -22,7 +22,7 @@ export default defineConfig({
   },
   // Tools configuration
   tools: {
-    rspack: (config) => {
+    rspack: config => {
       config.target = 'node18';
       config.externalsType = 'module';
       // Externalize all node_modules

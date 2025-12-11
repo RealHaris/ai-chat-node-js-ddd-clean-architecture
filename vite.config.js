@@ -6,7 +6,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'dist/main.js'),
       formats: ['es'],
-      fileName: 'main'
+      fileName: 'main',
     },
     rollupOptions: {
       external: [
@@ -25,11 +25,11 @@ export default defineConfig({
         'zod',
         'zod-validation-error',
         '@node-ts/bus-core',
-        '@node-ts/bus-messages'
-      ]
+        '@node-ts/bus-messages',
+      ],
     },
     outDir: 'dist',
     emptyOutDir: false,
-    minify: false
-  }
+    minify: false,
+  },
 });

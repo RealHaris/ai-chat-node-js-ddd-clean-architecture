@@ -44,12 +44,12 @@ export class UserController extends BaseController {
         const userUuid = req.params.userUuid;
         const user = await this.userGetUseCase.execute(userUuid);
 
-      const currentStore = asyncLocalStorage.get() || { method: '', url: '' };
-      await asyncLocalStorage.run(
-        {
-          ...currentStore,
-          user,
-        },
+        const currentStore = asyncLocalStorage.get() || { method: '', url: '' };
+        await asyncLocalStorage.run(
+          {
+            ...currentStore,
+            user,
+          },
           async () => {
             next();
           }

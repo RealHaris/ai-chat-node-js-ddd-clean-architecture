@@ -2,7 +2,10 @@ import { inject, injectable } from 'tsyringe';
 import { IUseCase, Result } from 'types-ddd';
 import { fromZodError } from 'zod-validation-error';
 
-import { Customer as CustomerModel, User as UserModel } from '~/shared/infra/db/types';
+import {
+  Customer as CustomerModel,
+  User as UserModel,
+} from '~/shared/infra/db/types';
 
 import Config from '~/configs';
 
