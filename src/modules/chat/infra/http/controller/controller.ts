@@ -12,6 +12,7 @@ import { ChatMessageWriteRepository } from '~/modules/chat/infra/persistence/rep
 import { QuotaService } from '~/modules/subscription/application/service/quota.service';
 import HttpStatus from '~/shared/common/enums/http_status';
 import { ChatMessage } from '~/shared/infra/db/types';
+import { adminMiddleware } from '~/shared/infra/http/middleware/admin';
 import {
   AuthenticatedRequest,
   authMiddleware,
@@ -40,16 +41,27 @@ export class ChatController extends BaseController {
     // All routes require authentication
     this.router.use(authMiddleware);
 
-    // Send a message
-    this.router.post('/send', this.sendMessage.bind(this));
+    // Send a message (ask a question)
+    this.router.post('/ask-question', this.askQuestion.bind(this));
 
-    // Get chat history
-    this.router.get('/history', this.getHistory.bind(this));
+    // Get current user's messages
+    this.router.get('/messages', this.getUserMessages.bind(this));
+
+    // Admin: Get any user's messages
+    this.router.get(
+      '/list-user-messages/:userId',
+      adminMiddleware,
+      this.listUserMessages.bind(this)
+    );
 
     return this.router;
   }
 
-  sendMessage = async (
+  /**
+   * POST /chat/ask-question
+   * Send a message/question to the AI
+   */
+  askQuestion = async (
     req: AuthenticatedRequest,
     res: express.Response
   ): Promise<void> => {
@@ -147,9 +159,8 @@ export class ChatController extends BaseController {
       };
 
       res.status(HttpStatus.OK).json({
-        message: completedMessage,
-        quotaRemaining: updatedQuotaInfo.totalRemainingMessages,
         data: response,
+        quotaRemaining: updatedQuotaInfo.totalRemainingMessages,
       });
     } catch (error: unknown) {
       const errorName = error instanceof Error ? error.name : 'Error';
@@ -161,14 +172,19 @@ export class ChatController extends BaseController {
         return;
       }
 
-      console.error('Send message error:', error);
+      console.error('Ask question error:', error);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to send message',
       });
     }
   };
 
-  getHistory = async (
+  /**
+   * GET /chat/messages
+   * Get current user's messages with pagination and optional status filter
+   * Query params: page, size, status
+   */
+  getUserMessages = async (
     req: AuthenticatedRequest,
     res: express.Response
   ): Promise<void> => {
@@ -181,14 +197,31 @@ export class ChatController extends BaseController {
       }
 
       const page = parseInt(req.query.page as string) || 1;
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-      const offset = (page - 1) * limit;
+      const size = Math.min(parseInt(req.query.size as string) || 20, 100);
+      const offset = (page - 1) * size;
+      const status = req.query.status as
+        | 'pending'
+        | 'completed'
+        | 'failed'
+        | undefined;
+
+      // Validate status if provided
+      if (status && !['pending', 'completed', 'failed'].includes(status)) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          error: 'Invalid status. Must be one of: pending, completed, failed',
+        });
+        return;
+      }
 
       const userId = req.user.id;
 
       const [messages, total] = await Promise.all([
-        this.chatMessageReadRepository.findByUserId(userId, { limit, offset }),
-        this.chatMessageReadRepository.countByUserId(userId),
+        this.chatMessageReadRepository.findByUserId(userId, {
+          limit: size,
+          offset,
+          status,
+        }),
+        this.chatMessageReadRepository.countByUserId(userId, status),
       ]);
 
       const response: ChatMessageResponseDTO[] = messages.map(
@@ -214,14 +247,86 @@ export class ChatController extends BaseController {
           messages: response,
           total,
           page,
-          limit,
-          totalPages: Math.ceil(total / limit),
+          size,
+          totalPages: Math.ceil(total / size),
         },
       });
     } catch (error: unknown) {
-      console.error('Get history error:', error);
+      console.error('Get user messages error:', error);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to retrieve chat history',
+        error: 'Failed to retrieve messages',
+      });
+    }
+  };
+
+  /**
+   * GET /chat/list-user-messages/:userId
+   * Admin-only: Get any user's messages with pagination and optional status filter
+   * Query params: page, size, status
+   */
+  listUserMessages = async (
+    req: AuthenticatedRequest,
+    res: express.Response
+  ): Promise<void> => {
+    try {
+      const { userId } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const size = Math.min(parseInt(req.query.size as string) || 20, 100);
+      const offset = (page - 1) * size;
+      const status = req.query.status as
+        | 'pending'
+        | 'completed'
+        | 'failed'
+        | undefined;
+
+      // Validate status if provided
+      if (status && !['pending', 'completed', 'failed'].includes(status)) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          error: 'Invalid status. Must be one of: pending, completed, failed',
+        });
+        return;
+      }
+
+      const [messages, total] = await Promise.all([
+        this.chatMessageReadRepository.findByUserId(userId, {
+          limit: size,
+          offset,
+          status,
+        }),
+        this.chatMessageReadRepository.countByUserId(userId, status),
+      ]);
+
+      const response: ChatMessageResponseDTO[] = messages.map(
+        (message: ChatMessage) => ({
+          id: message.id,
+          userId: message.userId,
+          query: message.query,
+          response: message.response,
+          tokens: message.tokens as {
+            prompt_tokens: number;
+            completion_tokens: number;
+            total_tokens: number;
+          } | null,
+          status: message.status as 'pending' | 'completed' | 'failed',
+          errorMessage: message.errorMessage,
+          createdAt: message.createdAt,
+          updatedAt: message.updatedAt,
+        })
+      );
+
+      res.status(HttpStatus.OK).json({
+        data: {
+          messages: response,
+          total,
+          page,
+          size,
+          totalPages: Math.ceil(total / size),
+        },
+      });
+    } catch (error: unknown) {
+      console.error('List user messages error:', error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        error: 'Failed to retrieve messages',
       });
     }
   };

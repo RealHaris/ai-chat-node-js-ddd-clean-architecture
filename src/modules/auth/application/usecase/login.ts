@@ -4,11 +4,11 @@ import { fromZodError } from 'zod-validation-error';
 
 import { LoginDTO, LoginDTOSchema } from '~/modules/auth/application/dto/dto';
 import { PasswordService } from '~/modules/auth/application/service/password.service';
+import { RefreshTokenService } from '~/modules/auth/application/service/refresh_token.service';
 import {
   TokenService,
   TokenPair,
 } from '~/modules/auth/application/service/token.service';
-import { RefreshTokenWriteRepository } from '~/modules/auth/infra/persistence/repository/refresh_token_write';
 import { UserReadRepository } from '~/modules/user/infra/persistence/repository/read';
 import { User as UserModel } from '~/shared/infra/db/types';
 import { UnauthorizedError } from '~/shared/infra/error';
@@ -26,8 +26,8 @@ export class LoginUseCase implements IUseCase<
   constructor(
     @inject(UserReadRepository)
     private userReadRepository: UserReadRepository,
-    @inject(RefreshTokenWriteRepository)
-    private refreshTokenWriteRepository: RefreshTokenWriteRepository,
+    @inject(RefreshTokenService)
+    private refreshTokenService: RefreshTokenService,
     @inject(PasswordService)
     private passwordService: PasswordService,
     @inject(TokenService)
@@ -66,7 +66,7 @@ export class LoginUseCase implements IUseCase<
     }
 
     // Revoke all existing refresh tokens for this user
-    await this.refreshTokenWriteRepository.revokeAllUserTokens(user.id);
+    await this.refreshTokenService.revokeAllUserTokens(user.id);
 
     // Generate new tokens
     const tokens = this.tokenService.generateTokenPair({
@@ -75,11 +75,12 @@ export class LoginUseCase implements IUseCase<
       role: user.role,
     });
 
-    // Save new refresh token
-    await this.refreshTokenWriteRepository.create({
+    // Store new refresh token in Redis
+    await this.refreshTokenService.storeToken(tokens.refreshToken, {
       userId: user.id,
-      token: tokens.refreshToken,
-      expiresAt: tokens.refreshTokenExpiresAt,
+      email: user.email,
+      role: user.role,
+      createdAt: Date.now(),
     });
 
     // Remove password from response

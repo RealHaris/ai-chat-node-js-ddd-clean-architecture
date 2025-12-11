@@ -7,11 +7,11 @@ import {
   RegisterDTOSchema,
 } from '~/modules/auth/application/dto/dto';
 import { PasswordService } from '~/modules/auth/application/service/password.service';
+import { RefreshTokenService } from '~/modules/auth/application/service/refresh_token.service';
 import {
   TokenService,
   TokenPair,
 } from '~/modules/auth/application/service/token.service';
-import { RefreshTokenWriteRepository } from '~/modules/auth/infra/persistence/repository/refresh_token_write';
 import { User } from '~/modules/user/domain/entity/user';
 import { UserReadRepository } from '~/modules/user/infra/persistence/repository/read';
 import { UserWriteRepository } from '~/modules/user/infra/persistence/repository/write';
@@ -33,8 +33,8 @@ export class RegisterUseCase implements IUseCase<
     private userReadRepository: UserReadRepository,
     @inject(UserWriteRepository)
     private userWriteRepository: UserWriteRepository,
-    @inject(RefreshTokenWriteRepository)
-    private refreshTokenWriteRepository: RefreshTokenWriteRepository,
+    @inject(RefreshTokenService)
+    private refreshTokenService: RefreshTokenService,
     @inject(PasswordService)
     private passwordService: PasswordService,
     @inject(TokenService)
@@ -84,11 +84,12 @@ export class RegisterUseCase implements IUseCase<
       role: createdUser.role,
     });
 
-    // Save refresh token
-    await this.refreshTokenWriteRepository.create({
+    // Store refresh token in Redis
+    await this.refreshTokenService.storeToken(tokens.refreshToken, {
       userId: createdUser.id,
-      token: tokens.refreshToken,
-      expiresAt: tokens.refreshTokenExpiresAt,
+      email: createdUser.email,
+      role: createdUser.role,
+      createdAt: Date.now(),
     });
 
     // Remove password from response

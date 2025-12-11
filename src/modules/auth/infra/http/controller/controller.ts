@@ -6,6 +6,7 @@ import { RefreshTokenUseCase } from '~/modules/auth/application/usecase/refresh_
 import { RegisterUseCase } from '~/modules/auth/application/usecase/register';
 import { ResetPasswordUseCase } from '~/modules/auth/application/usecase/reset_password';
 import HttpStatus from '~/shared/common/enums/http_status';
+import { adminMiddleware } from '~/shared/infra/http/middleware/admin';
 import {
   AuthenticatedRequest,
   authMiddleware,
@@ -31,12 +32,16 @@ export class AuthController extends BaseController {
   }
 
   register() {
+    // Public routes - no auth required
     this.router.post('/register', this.handleRegister.bind(this));
     this.router.post('/login', this.handleLogin.bind(this));
     this.router.post('/refresh', this.handleRefreshToken.bind(this));
+
+    // Admin-only route - reset any user's password
     this.router.post(
       '/reset-password',
       authMiddleware,
+      adminMiddleware,
       this.handleResetPassword.bind(this)
     );
 
@@ -150,22 +155,16 @@ export class AuthController extends BaseController {
     }
   };
 
+  /**
+   * Admin-only endpoint to reset any user's password.
+   * Accepts userId and newPassword in the request body.
+   */
   handleResetPassword = async (
-    req: AuthenticatedRequest,
+    _req: AuthenticatedRequest,
     res: express.Response
   ): Promise<void> => {
     try {
-      if (!req.user) {
-        res.status(HttpStatus.UNAUTHORIZED).json({
-          error: 'User not authenticated',
-        });
-        return;
-      }
-
-      const result = await this.resetPasswordUseCase.execute({
-        ...req.body,
-        userId: req.user.id,
-      });
+      const result = await this.resetPasswordUseCase.execute(_req.body);
 
       if (result.isFail()) {
         res.status(HttpStatus.BAD_REQUEST).json({
@@ -180,10 +179,14 @@ export class AuthController extends BaseController {
     } catch (error: unknown) {
       const errorName = error instanceof Error ? error.name : 'Error';
 
-      if (
-        errorName === 'ValidationError' ||
-        errorName === 'UnauthorizedError'
-      ) {
+      if (errorName === 'NotFoundError') {
+        res.status(HttpStatus.NOT_FOUND).json({
+          error: error instanceof Error ? error.message : 'User not found',
+        });
+        return;
+      }
+
+      if (errorName === 'ValidationError') {
         res.status(HttpStatus.BAD_REQUEST).json({
           error: error instanceof Error ? error.message : 'Invalid request',
         });

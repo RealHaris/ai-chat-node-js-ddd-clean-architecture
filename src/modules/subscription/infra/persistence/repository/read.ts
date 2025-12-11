@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 import { singleton } from 'tsyringe';
 
 import { db } from '~/shared/infra/db/config/config';
@@ -82,5 +82,40 @@ export class SubscriptionReadRepository extends BaseReadRepository<
           eq(subscriptions.renewalDate, date)
         )
       );
+  }
+
+  async countByUserId(userId: string): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId));
+
+    return Number(result[0]?.count || 0);
+  }
+
+  async countActiveByUserId(userId: string): Promise<number> {
+    const now = new Date();
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.userId, userId),
+          eq(subscriptions.status, true),
+          gt(subscriptions.endDate, now),
+          isNull(subscriptions.cancelledAt)
+        )
+      );
+
+    return Number(result[0]?.count || 0);
+  }
+
+  async sumSpentByUserId(userId: string): Promise<string> {
+    const result = await this.db
+      .select({ total: sql<string>`COALESCE(SUM(bundle_price::numeric), 0)` })
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId));
+
+    return result[0]?.total || '0.00';
   }
 }

@@ -1,5 +1,6 @@
 import {
   boolean,
+  decimal,
   index,
   integer,
   pgTable,
@@ -31,6 +32,11 @@ export const users = pgTable(
     // Bundle snapshot (denormalized for history preservation)
     latestBundleName: varchar('latest_bundle_name', { length: 100 }),
     latestBundleMaxMessages: integer('latest_bundle_max_messages'),
+
+    // Spending tracking
+    totalSpent: decimal('total_spent', { precision: 10, scale: 2 })
+      .notNull()
+      .default('0.00'),
 
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()

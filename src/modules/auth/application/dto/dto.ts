@@ -30,9 +30,9 @@ export const RefreshTokenDTOSchema = z.object({
 
 export type RefreshTokenDTO = z.infer<typeof RefreshTokenDTOSchema>;
 
-// Reset Password DTO
-export const ResetPasswordDTOSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
+// Admin Reset Password DTO (admin-only, no current password required)
+export const AdminResetPasswordDTOSchema = z.object({
+  userId: z.string().uuid('Invalid user ID format'),
   newPassword: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -42,4 +42,4 @@ export const ResetPasswordDTOSchema = z.object({
     .regex(/\d/, 'Password must contain at least one number'),
 });
 
-export type ResetPasswordDTO = z.infer<typeof ResetPasswordDTOSchema>;
+export type AdminResetPasswordDTO = z.infer<typeof AdminResetPasswordDTOSchema>;

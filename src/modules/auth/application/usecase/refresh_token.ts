@@ -6,12 +6,11 @@ import {
   RefreshTokenDTO,
   RefreshTokenDTOSchema,
 } from '~/modules/auth/application/dto/dto';
+import { RefreshTokenService } from '~/modules/auth/application/service/refresh_token.service';
 import {
   TokenService,
   TokenPair,
 } from '~/modules/auth/application/service/token.service';
-import { RefreshTokenReadRepository } from '~/modules/auth/infra/persistence/repository/refresh_token_read';
-import { RefreshTokenWriteRepository } from '~/modules/auth/infra/persistence/repository/refresh_token_write';
 import { UserReadRepository } from '~/modules/user/infra/persistence/repository/read';
 import { UnauthorizedError } from '~/shared/infra/error';
 
@@ -27,10 +26,8 @@ export class RefreshTokenUseCase implements IUseCase<
   constructor(
     @inject(UserReadRepository)
     private userReadRepository: UserReadRepository,
-    @inject(RefreshTokenReadRepository)
-    private refreshTokenReadRepository: RefreshTokenReadRepository,
-    @inject(RefreshTokenWriteRepository)
-    private refreshTokenWriteRepository: RefreshTokenWriteRepository,
+    @inject(RefreshTokenService)
+    private refreshTokenService: RefreshTokenService,
     @inject(TokenService)
     private tokenService: TokenService
   ) {}
@@ -44,18 +41,17 @@ export class RefreshTokenUseCase implements IUseCase<
       return Result.fail(fromZodError(schema.error).toString());
     }
 
-    // Verify the refresh token
+    // Verify the refresh token JWT
     const tokenPayload = this.tokenService.verifyRefreshToken(dto.refreshToken);
     if (!tokenPayload) {
       throw new UnauthorizedError('Invalid or expired refresh token');
     }
 
-    // Check if token exists in database and is valid
-    const storedToken = await this.refreshTokenReadRepository.findValidToken(
+    // Check if token exists in Redis and is valid
+    const isValid = await this.refreshTokenService.isTokenValid(
       dto.refreshToken
     );
-
-    if (!storedToken) {
+    if (!isValid) {
       throw new UnauthorizedError('Refresh token has been revoked or expired');
     }
 
@@ -66,7 +62,7 @@ export class RefreshTokenUseCase implements IUseCase<
     }
 
     // Revoke the old refresh token
-    await this.refreshTokenWriteRepository.revokeToken(dto.refreshToken);
+    await this.refreshTokenService.revokeToken(dto.refreshToken);
 
     // Generate new token pair
     const tokens = this.tokenService.generateTokenPair({
@@ -75,11 +71,12 @@ export class RefreshTokenUseCase implements IUseCase<
       role: user.role,
     });
 
-    // Save new refresh token
-    await this.refreshTokenWriteRepository.create({
+    // Store new refresh token in Redis
+    await this.refreshTokenService.storeToken(tokens.refreshToken, {
       userId: user.id,
-      token: tokens.refreshToken,
-      expiresAt: tokens.refreshTokenExpiresAt,
+      email: user.email,
+      role: user.role,
+      createdAt: Date.now(),
     });
 
     return Result.Ok({
