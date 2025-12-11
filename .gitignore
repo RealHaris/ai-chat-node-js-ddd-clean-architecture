@@ -131,3 +131,7 @@ temp/
 postman-collections
 bun.lock
 package-lock.json
+AGENTS.md
+GEMINI.md
+QWEN.md
+docs

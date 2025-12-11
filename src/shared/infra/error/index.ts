@@ -6,3 +6,4 @@ export * from '~/shared/infra/error/validation';
 export * from '~/shared/infra/error/aggregate-not-found';
 export * from '~/shared/infra/error/not_implemented';
 export * from '~/shared/infra/error/state_error';
+export * from '~/shared/infra/error/quota_exceeded';
