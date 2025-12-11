@@ -26,11 +26,26 @@ export class HttpServer {
   public async startServer() {
     const app = express();
 
+    // Setup Bull Board for queue visualization (admin only in production)
+    const serverAdapter = new ExpressAdapter();
+    serverAdapter.setBasePath('/admin/queues');
+
+    createBullBoard({
+      queues: [new BullMQAdapter(subscriptionExpiryQueue)],
+      serverAdapter,
+    });
+
+    // Mount Bull Board UI
+    app.use('/admin/queues', serverAdapter.getRouter());
+
     await registerApplicationMiddlewares(app);
     await registerApplicationRouters(app);
 
     app.listen(Config.APP_PORT, () => {
       console.log(`Server available at http://localhost:${Config.APP_PORT}`);
+      console.log(
+        `Bull Board UI available at http://localhost:${Config.APP_PORT}/admin/queues`
+      );
     });
   }
 }
