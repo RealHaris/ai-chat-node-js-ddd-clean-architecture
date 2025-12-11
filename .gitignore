@@ -112,7 +112,6 @@ dist
 
 # Gatsby files
 .cache/
-public
 
 # Storybook build outputs
 .out
@@ -128,3 +127,7 @@ temp/
 *.sqlite
 *.sqlite3
 
+.cursor
+postman-collections
+bun.lock
+package-lock.json
