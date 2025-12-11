@@ -131,6 +131,15 @@ export class BundleTierController extends BaseController {
     try {
       const { id } = req.params;
 
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(id)) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          error: 'Invalid UUID format',
+        });
+        return;
+      }
+
       const result = await this.getBundleTierUseCase.execute({ id });
 
       if (result.isFail()) {

@@ -1,11 +1,10 @@
-import 'reflect-metadata';
 import express from 'express';
-import { container } from 'tsyringe';
+import 'reflect-metadata';
 import Config from '~/configs';
 import { initDB, initMigration } from '~/shared/infra/db/config/config';
 import { initModels } from '~/shared/infra/db/models/models';
-import registerApplicationMiddlewares from '~/shared/infra/http/middleware';
 import registerApplicationRouters from '~/shared/infra/http/controller';
+import registerApplicationMiddlewares from '~/shared/infra/http/middleware';
 import { testRedisConnection } from '~/shared/infra/redis/client';
 
 export async function createApp() {
@@ -34,7 +33,7 @@ export async function createApp() {
 
 export async function startServer() {
   const app = await createApp();
-  
+
   app.listen(Config.APP_PORT, () => {
     console.log(`Server available at http://localhost:${Config.APP_PORT}`);
   });

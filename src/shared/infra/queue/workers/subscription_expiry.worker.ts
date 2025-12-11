@@ -277,7 +277,10 @@ export function createSubscriptionExpiryWorker(): Worker {
       connection: {
         host: Config.REDIS_HOST,
         port: Config.REDIS_PORT,
-        password: Config.REDIS_USE_PASSWORD === 'yes' ? Config.REDIS_PASSWORD : undefined,
+        password:
+          Config.REDIS_USE_PASSWORD === 'yes'
+            ? Config.REDIS_PASSWORD
+            : undefined,
       },
       concurrency: 5, // Process up to 5 jobs concurrently
     }

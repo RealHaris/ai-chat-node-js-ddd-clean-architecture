@@ -197,6 +197,12 @@ export class ChatController extends BaseController {
       }
 
       const page = parseInt(req.query.page as string) || 1;
+      if (page < 1) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          error: 'Page number must be greater than 0',
+        });
+        return;
+      }
       const size = Math.min(parseInt(req.query.size as string) || 20, 100);
       const offset = (page - 1) * size;
       const status = req.query.status as
@@ -271,6 +277,12 @@ export class ChatController extends BaseController {
     try {
       const { userId } = req.params;
       const page = parseInt(req.query.page as string) || 1;
+      if (page < 1) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          error: 'Page number must be greater than 0',
+        });
+        return;
+      }
       const size = Math.min(parseInt(req.query.size as string) || 20, 100);
       const offset = (page - 1) * size;
       const status = req.query.status as

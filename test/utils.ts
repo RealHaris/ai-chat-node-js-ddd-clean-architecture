@@ -3,6 +3,7 @@
  * Provides common functionality for all test modules
  */
 
+
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3001';
 
 // Colors for console output
@@ -107,6 +108,9 @@ export async function apiRequest<T = unknown>(
       ...options.headers,
     },
   });
+
+  // Small delay to prevent overwhelming the server
+  await new Promise(resolve => setTimeout(resolve, 50));
 
   let data: T;
   try {
@@ -356,6 +360,18 @@ export interface TestStore {
     status: string;
   }>;
 }
+
+export const SEEDED_DATA = {
+  ADMIN_USER: {
+    email: 'admin@test.com',
+    password: 'admin123',
+  },
+  TIERS: {
+    BASIC: { name: 'Basic', maxMessages: 10 },
+    PRO: { name: 'Pro', maxMessages: 100 },
+    ENTERPRISE: { name: 'Enterprise', maxMessages: -1 },
+  },
+};
 
 export const testStore: TestStore = {
   bundleTiers: [],

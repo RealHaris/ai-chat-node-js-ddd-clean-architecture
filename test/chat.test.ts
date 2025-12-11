@@ -45,12 +45,10 @@ interface ChatMessagesListResponse {
       status: string;
       createdAt: string;
     }>;
-    pagination: {
-      page: number;
-      size: number;
-      total: number;
-      totalPages: number;
-    };
+    page: number;
+    size: number;
+    total: number;
+    totalPages: number;
   };
 }
 
@@ -62,8 +60,10 @@ async function ensureUsersExist(): Promise<void> {
 
     const response = await apiRequest<{
       data?: {
-        accessToken: string;
-        refreshToken: string;
+        tokens: {
+          accessToken: string;
+          refreshToken: string;
+        };
         user: { id: string; email: string };
       };
     }>('/v1/auth/register', {
@@ -76,8 +76,8 @@ async function ensureUsersExist(): Promise<void> {
         id: response.data.data.user.id,
         email,
         password,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken,
+        accessToken: response.data.data.tokens.accessToken,
+        refreshToken: response.data.data.tokens.refreshToken,
       };
       logInfo(`Created regular user for chat tests: ${email}`);
     }
@@ -89,8 +89,10 @@ async function ensureUsersExist(): Promise<void> {
 
     const response = await apiRequest<{
       data?: {
-        accessToken: string;
-        refreshToken: string;
+        tokens: {
+          accessToken: string;
+          refreshToken: string;
+        };
         user: { id: string; email: string };
       };
     }>('/v1/auth/register', {
@@ -103,8 +105,8 @@ async function ensureUsersExist(): Promise<void> {
         id: response.data.data.user.id,
         email,
         password,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken,
+        accessToken: response.data.data.tokens.accessToken,
+        refreshToken: response.data.data.tokens.refreshToken,
       };
       logInfo(`Created admin user for chat tests: ${email}`);
       logWarning(
@@ -185,8 +187,8 @@ export async function runChatTests(): Promise<TestSummary> {
           }
         );
 
-        // Could be 201 for success or 429 if quota exceeded
-        if (response.status === 201) {
+        // Could be 200 for success or 403 if quota exceeded
+        if (response.status === 200) {
           assertNotNull(response.data.data, 'Should have data');
           assertHasProperty(response.data.data!, 'id', 'Should have id');
           assertHasProperty(
@@ -205,11 +207,11 @@ export async function runChatTests(): Promise<TestSummary> {
 
           logInfo(`Created chat message: ${createdMessageId}`);
           logInfo(`Initial status: ${response.data.data!.status}`);
-        } else if (response.status === 429) {
+        } else if (response.status === 403) {
           logWarning('Quota exceeded - user has used all free tier messages');
           assertTrue(true, 'Quota exceeded is acceptable');
         } else {
-          assertStatusCode(response, 201, 'Should return 201 or 429');
+          assertStatusCode(response, 200, 'Should return 200 or 403');
         }
       },
     },
@@ -227,13 +229,13 @@ export async function runChatTests(): Promise<TestSummary> {
           }
         );
 
-        // Could be 201 for success or 429 if quota exceeded
+        // Could be 200 for success or 403 if quota exceeded
         assertTrue(
-          response.status === 201 || response.status === 429,
-          'Should return 201 or 429 (quota exceeded)'
+          response.status === 200 || response.status === 403,
+          'Should return 200 or 403 (quota exceeded)'
         );
 
-        if (response.status === 201) {
+        if (response.status === 200) {
           logInfo('Second message sent successfully');
         } else {
           logInfo('Quota limit reached');
@@ -254,13 +256,13 @@ export async function runChatTests(): Promise<TestSummary> {
           }
         );
 
-        // Could be 201 for success or 429 if quota exceeded
+        // Could be 200 for success or 403 if quota exceeded
         assertTrue(
-          response.status === 201 || response.status === 429,
-          'Should return 201 or 429 (quota exceeded)'
+          response.status === 200 || response.status === 403,
+          'Should return 200 or 403 (quota exceeded)'
         );
 
-        if (response.status === 201) {
+        if (response.status === 200) {
           logInfo('Third message sent successfully');
         } else {
           logInfo('Quota limit reached');
@@ -283,11 +285,11 @@ export async function runChatTests(): Promise<TestSummary> {
 
         // Free tier is 3 messages, so 4th should likely fail
         assertTrue(
-          response.status === 201 || response.status === 429,
-          'Should return 201 or 429'
+          response.status === 200 || response.status === 403,
+          'Should return 200 or 403'
         );
 
-        if (response.status === 429) {
+        if (response.status === 403) {
           logInfo('Free tier quota (3 messages) correctly enforced');
         }
       },
@@ -320,11 +322,8 @@ export async function runChatTests(): Promise<TestSummary> {
           'messages',
           'Should have messages'
         );
-        assertHasProperty(
-          response.data.data!,
-          'pagination',
-          'Should have pagination'
-        );
+        assertHasProperty(response.data.data!, 'page', 'Should have page');
+        assertHasProperty(response.data.data!, 'total', 'Should have total');
 
         logInfo(`Found ${response.data.data!.messages.length} messages`);
       },
@@ -343,7 +342,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(response.data.data, 'Should have data');
 
         // Verify pagination info
-        if (response.data.data!.pagination) {
+        if (response.data.data!.total !== undefined) {
           assertTrue(
             response.data.data!.messages.length <= 2,
             'Should have at most 2 messages'

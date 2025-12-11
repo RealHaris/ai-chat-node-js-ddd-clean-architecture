@@ -4,13 +4,14 @@
  * Usage: npm run test
  */
 
-import { printFinalSummary, TestSummary, logSection, logInfo } from './utils';
 import { runAuthTests } from './auth.test';
-import { runUserTests } from './user.test';
 import { runBundleTierTests } from './bundle-tier.test';
-import { runSubscriptionTests } from './subscription.test';
 import { runChatTests } from './chat.test';
 import { runE2ETests } from './e2e.test';
+import { runAdvancedE2ETests } from './advanced-e2e.test';
+import { runSubscriptionTests } from './subscription.test';
+import { runUserTests } from './user.test';
+import { TestSummary, logInfo, logSection, printFinalSummary } from './utils';
 
 interface SuiteResult {
   name: string;
@@ -73,12 +74,17 @@ async function runAllTests(): Promise<void> {
       results.push({ name: 'E2E Tests', summary: e2eSummary });
     }
 
+    if (shouldRun('advanced')) {
+      const advancedSummary = await runAdvancedE2ETests();
+      results.push({ name: 'Advanced E2E Tests', summary: advancedSummary });
+    }
+
     // Print final summary
     if (results.length > 0) {
       printFinalSummary(results);
     } else {
       logInfo('No tests were run. Use --all or specify test names.');
-      logInfo('Available: auth, user, bundle, subscription, chat, e2e');
+      logInfo('Available: auth, user, bundle, subscription, chat, e2e, advanced');
     }
   } catch (error) {
     console.error('\nTest runner encountered an error:', error);

@@ -54,15 +54,14 @@ interface QuotaResponse {
   message?: string;
   error?: string;
   data?: {
+    totalRemainingMessages: number;
     isFreeTier: boolean;
-    monthlyMessageCount: number;
-    maxMessages: number;
-    remainingMessages: number;
-    activeSubscription?: {
-      id: string;
-      bundleTierName: string;
-      expiresAt: string;
-    };
+    latestBundleId: string | null;
+    latestBundleRemainingQuota: number | null;
+    latestBundleName: string | null;
+    latestBundleMaxMessages: number | null;
+    hasQuota: boolean;
+    isUnlimited: boolean;
   };
 }
 
@@ -77,8 +76,10 @@ async function ensureUsersAndBundlesExist(): Promise<void> {
 
     const response = await apiRequest<{
       data?: {
-        accessToken: string;
-        refreshToken: string;
+        tokens: {
+          accessToken: string;
+          refreshToken: string;
+        };
         user: { id: string; email: string };
       };
     }>('/v1/auth/register', {
@@ -91,8 +92,8 @@ async function ensureUsersAndBundlesExist(): Promise<void> {
         id: response.data.data.user.id,
         email,
         password,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken,
+        accessToken: response.data.data.tokens.accessToken,
+        refreshToken: response.data.data.tokens.refreshToken,
       };
       logInfo(`Created regular user for subscription tests: ${email}`);
     }
@@ -194,12 +195,12 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         );
         assertHasProperty(
           response.data.data!,
-          'remainingMessages',
-          'Should have remainingMessages'
+          'totalRemainingMessages',
+          'Should have totalRemainingMessages'
         );
 
         logInfo(
-          `User quota: ${response.data.data!.remainingMessages} messages remaining`
+          `User quota: ${response.data.data!.totalRemainingMessages} messages remaining`
         );
       },
     },
@@ -562,7 +563,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
 
         logInfo(
           `Final quota status: isFreeTier=${response.data.data!.isFreeTier}, ` +
-            `remaining=${response.data.data!.remainingMessages}`
+            `remaining=${response.data.data!.totalRemainingMessages}`
         );
       },
     },

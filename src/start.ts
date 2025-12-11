@@ -1,7 +1,7 @@
 import portfinder from 'portfinder';
 import { createApp } from './app';
 
-const port = process.env.PORT || 3000;
+const port = parseInt(process.env.APP_PORT || '3000', 10) || 3000;
 
 portfinder.getPort({ port }, async (err, availablePort) => {
   if (err) {

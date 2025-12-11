@@ -9,7 +9,6 @@ import {
   randomString,
   runTestSuite,
   assertStatusCode,
-  assertHasProperty,
   assertNotNull,
   assertTrue,
   assertEqual,
@@ -18,6 +17,7 @@ import {
   logInfo,
   logWarning,
   randomEmail,
+  SEEDED_DATA,
 } from './utils';
 
 interface BundleTierResponse {
@@ -56,8 +56,10 @@ async function ensureUsersExist(): Promise<void> {
 
     const response = await apiRequest<{
       data?: {
-        accessToken: string;
-        refreshToken: string;
+        tokens: {
+          accessToken: string;
+          refreshToken: string;
+        };
         user: { id: string; email: string };
       };
     }>('/v1/auth/register', {
@@ -70,8 +72,8 @@ async function ensureUsersExist(): Promise<void> {
         id: response.data.data.user.id,
         email,
         password,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken,
+        accessToken: response.data.data.tokens.accessToken,
+        refreshToken: response.data.data.tokens.refreshToken,
       };
       logInfo(`Created regular user for bundle tests: ${email}`);
     }
@@ -83,8 +85,10 @@ async function ensureUsersExist(): Promise<void> {
 
     const response = await apiRequest<{
       data?: {
-        accessToken: string;
-        refreshToken: string;
+        tokens: {
+          accessToken: string;
+          refreshToken: string;
+        };
         user: { id: string; email: string };
       };
     }>('/v1/auth/register', {
@@ -97,8 +101,8 @@ async function ensureUsersExist(): Promise<void> {
         id: response.data.data.user.id,
         email,
         password,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken,
+        accessToken: response.data.data.tokens.accessToken,
+        refreshToken: response.data.data.tokens.refreshToken,
       };
       logInfo(`Created admin user for bundle tests: ${email}`);
       logWarning(
@@ -140,6 +144,51 @@ export async function runBundleTierTests(): Promise<TestSummary> {
           }));
           logInfo(`Found ${response.data.data.length} bundle tiers`);
         }
+      },
+    },
+    {
+      name: 'Get All Bundle Tiers - Verify Seeded Tiers',
+      fn: async () => {
+        const response =
+          await apiRequest<BundleTiersListResponse>('/v1/bundle-tiers');
+
+        assertStatusCode(response, 200, 'Should return 200');
+        assertNotNull(response.data.data, 'Should have data');
+
+        const tiers = response.data.data!;
+
+        // Verify Basic Tier
+        const basicTier = tiers.find(
+          t => t.name === SEEDED_DATA.TIERS.BASIC.name
+        );
+        assertNotNull(basicTier, 'Basic tier should exist');
+        assertEqual(
+          basicTier!.maxMessages,
+          SEEDED_DATA.TIERS.BASIC.maxMessages,
+          'Basic tier max messages should match'
+        );
+
+        // Verify Pro Tier
+        const proTier = tiers.find(t => t.name === SEEDED_DATA.TIERS.PRO.name);
+        assertNotNull(proTier, 'Pro tier should exist');
+        assertEqual(
+          proTier!.maxMessages,
+          SEEDED_DATA.TIERS.PRO.maxMessages,
+          'Pro tier max messages should match'
+        );
+
+        // Verify Enterprise Tier
+        const enterpriseTier = tiers.find(
+          t => t.name === SEEDED_DATA.TIERS.ENTERPRISE.name
+        );
+        assertNotNull(enterpriseTier, 'Enterprise tier should exist');
+        assertEqual(
+          enterpriseTier!.maxMessages,
+          SEEDED_DATA.TIERS.ENTERPRISE.maxMessages,
+          'Enterprise tier max messages should match'
+        );
+
+        logInfo('Verified all seeded tiers exist');
       },
     },
     {
@@ -258,15 +307,18 @@ export async function runBundleTierTests(): Promise<TestSummary> {
     {
       name: 'Admin Create Bundle Tier - Without auth',
       fn: async () => {
-        const response = await apiRequest<BundleTierResponse>('/v1/bundle-tiers', {
-          method: 'POST',
-          body: JSON.stringify({
-            name: 'Test Bundle',
-            maxMessages: 100,
-            priceMonthly: '9.99',
-            priceYearly: '99.99',
-          }),
-        });
+        const response = await apiRequest<BundleTierResponse>(
+          '/v1/bundle-tiers',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              name: 'Test Bundle',
+              maxMessages: 100,
+              priceMonthly: '9.99',
+              priceYearly: '99.99',
+            }),
+          }
+        );
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
       },

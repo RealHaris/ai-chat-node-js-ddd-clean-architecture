@@ -15,14 +15,17 @@ import {
   testStore,
   TestSummary,
   logInfo,
+  SEEDED_DATA,
 } from './utils';
 
 interface AuthResponse {
   message?: string;
   error?: string;
   data?: {
-    accessToken: string;
-    refreshToken: string;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
     user: {
       id: string;
       email: string;
@@ -62,11 +65,16 @@ export async function runAuthTests(): Promise<TestSummary> {
         assertNotNull(response.data.data, 'Response should have data');
         assertHasProperty(
           response.data.data!,
+          'tokens',
+          'Should have tokens object'
+        );
+        assertHasProperty(
+          response.data.data!.tokens,
           'accessToken',
           'Should have accessToken'
         );
         assertHasProperty(
-          response.data.data!,
+          response.data.data!.tokens,
           'refreshToken',
           'Should have refreshToken'
         );
@@ -77,8 +85,8 @@ export async function runAuthTests(): Promise<TestSummary> {
           id: response.data.data!.user.id,
           email: regularUserEmail,
           password: regularUserPassword,
-          accessToken: response.data.data!.accessToken,
-          refreshToken: response.data.data!.refreshToken,
+          accessToken: response.data.data!.tokens.accessToken,
+          refreshToken: response.data.data!.tokens.refreshToken,
         };
 
         logInfo(`Created regular user: ${regularUserEmail}`);
@@ -103,8 +111,8 @@ export async function runAuthTests(): Promise<TestSummary> {
           id: response.data.data!.user.id,
           email: adminUserEmail,
           password: adminUserPassword,
-          accessToken: response.data.data!.accessToken,
-          refreshToken: response.data.data!.refreshToken,
+          accessToken: response.data.data!.tokens.accessToken,
+          refreshToken: response.data.data!.tokens.refreshToken,
         };
 
         logInfo(`Created admin user: ${adminUserEmail}`);
@@ -255,20 +263,55 @@ export async function runAuthTests(): Promise<TestSummary> {
         assertNotNull(response.data.data, 'Response should have data');
         assertHasProperty(
           response.data.data!,
+          'tokens',
+          'Should have tokens object'
+        );
+        assertHasProperty(
+          response.data.data!.tokens,
           'accessToken',
           'Should have accessToken'
         );
         assertHasProperty(
-          response.data.data!,
+          response.data.data!.tokens,
           'refreshToken',
           'Should have refreshToken'
         );
 
         // Update stored tokens
         if (testStore.regularUser) {
-          testStore.regularUser.accessToken = response.data.data!.accessToken;
-          testStore.regularUser.refreshToken = response.data.data!.refreshToken;
+          testStore.regularUser.accessToken =
+            response.data.data!.tokens.accessToken;
+          testStore.regularUser.refreshToken =
+            response.data.data!.tokens.refreshToken;
         }
+      },
+    },
+    {
+      name: 'Login - Seeded Admin User',
+      fn: async () => {
+        const response = await apiRequest<AuthResponse>('/v1/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: SEEDED_DATA.ADMIN_USER.email,
+            password: SEEDED_DATA.ADMIN_USER.password,
+          }),
+        });
+
+        assertStatusCode(response, 200, 'Seeded admin login should return 200');
+        assertNotNull(response.data.data, 'Response should have data');
+
+        // Store seeded admin for later tests if needed
+        if (!testStore.adminUser) {
+          testStore.adminUser = {
+            id: response.data.data!.user.id,
+            email: SEEDED_DATA.ADMIN_USER.email,
+            password: SEEDED_DATA.ADMIN_USER.password,
+            accessToken: response.data.data!.tokens.accessToken,
+            refreshToken: response.data.data!.tokens.refreshToken,
+          };
+        }
+
+        logInfo('Logged in as seeded admin user');
       },
     },
     {
@@ -356,18 +399,25 @@ export async function runAuthTests(): Promise<TestSummary> {
         assertNotNull(response.data.data, 'Response should have data');
         assertHasProperty(
           response.data.data!,
+          'tokens',
+          'Should have tokens object'
+        );
+        assertHasProperty(
+          response.data.data!.tokens,
           'accessToken',
           'Should have new accessToken'
         );
         assertHasProperty(
-          response.data.data!,
+          response.data.data!.tokens,
           'refreshToken',
           'Should have new refreshToken'
         );
 
         // Update stored tokens
-        testStore.regularUser!.accessToken = response.data.data!.accessToken;
-        testStore.regularUser!.refreshToken = response.data.data!.refreshToken;
+        testStore.regularUser!.accessToken =
+          response.data.data!.tokens.accessToken;
+        testStore.regularUser!.refreshToken =
+          response.data.data!.tokens.refreshToken;
       },
     },
     {

@@ -57,10 +57,9 @@ export default [
     },
   },
   {
-    files: ['**/*.test.ts'],
+    files: ['**/*.ts'],
     languageOptions: {
       globals: {
-        ...globals.browser,
         ...globals.node,
       },
     },
@@ -86,6 +85,7 @@ export default [
       'database/',
       '*.config.js',
       '*.config.ts',
+      '*.config.mjs',
       'coverage/',
     ],
   },
