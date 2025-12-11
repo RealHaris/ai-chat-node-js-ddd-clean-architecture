@@ -49,7 +49,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Valid user registration',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: regularUserEmail,
@@ -87,7 +87,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Admin user registration',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: adminUserEmail,
@@ -116,7 +116,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Invalid email format',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: 'invalid-email',
@@ -131,7 +131,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Weak password (too short)',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: randomEmail(),
@@ -146,7 +146,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Password without uppercase',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: randomEmail(),
@@ -164,7 +164,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Password without lowercase',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: randomEmail(),
@@ -182,7 +182,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Password without number',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: randomEmail(),
@@ -200,7 +200,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Duplicate email',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: regularUserEmail, // Already registered
@@ -215,7 +215,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Missing email',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             password: 'ValidPassword123',
@@ -228,7 +228,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Register - Missing password',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: randomEmail(),
@@ -243,7 +243,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Login - Valid credentials',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/login', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             email: regularUserEmail,
@@ -274,7 +274,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Login - Invalid password',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/login', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             email: regularUserEmail,
@@ -292,7 +292,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Login - Non-existent user',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/login', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             email: 'nonexistent@example.com',
@@ -309,7 +309,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Login - Invalid email format',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/login', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             email: 'invalid-email',
@@ -327,7 +327,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Login - Empty credentials',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/login', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             email: '',
@@ -345,7 +345,7 @@ export async function runAuthTests(): Promise<TestSummary> {
       fn: async () => {
         assertNotNull(testStore.regularUser, 'Regular user should be created');
 
-        const response = await apiRequest<AuthResponse>('/auth/refresh', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/refresh', {
           method: 'POST',
           body: JSON.stringify({
             refreshToken: testStore.regularUser!.refreshToken,
@@ -373,7 +373,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Refresh Token - Invalid token',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/refresh', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/refresh', {
           method: 'POST',
           body: JSON.stringify({
             refreshToken: 'invalid-refresh-token',
@@ -389,7 +389,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Refresh Token - Empty token',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/refresh', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/refresh', {
           method: 'POST',
           body: JSON.stringify({
             refreshToken: '',
@@ -402,7 +402,7 @@ export async function runAuthTests(): Promise<TestSummary> {
     {
       name: 'Refresh Token - Missing token',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/refresh', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/refresh', {
           method: 'POST',
           body: JSON.stringify({}),
         });
@@ -416,7 +416,7 @@ export async function runAuthTests(): Promise<TestSummary> {
       name: 'Reset Password - Without authentication',
       fn: async () => {
         const response = await apiRequest<ResetPasswordResponse>(
-          '/auth/reset-password',
+          '/v1/auth/reset-password',
           {
             method: 'POST',
             body: JSON.stringify({
@@ -439,7 +439,7 @@ export async function runAuthTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should be created');
 
         const response = await apiRequestAuth<ResetPasswordResponse>(
-          '/auth/reset-password',
+          '/v1/auth/reset-password',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -460,7 +460,7 @@ export async function runAuthTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should be created');
 
         const response = await apiRequestAuth<ResetPasswordResponse>(
-          '/auth/reset-password',
+          '/v1/auth/reset-password',
           testStore.adminUser!.accessToken,
           {
             method: 'POST',
@@ -484,7 +484,7 @@ export async function runAuthTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should be created');
 
         const response = await apiRequestAuth<ResetPasswordResponse>(
-          '/auth/reset-password',
+          '/v1/auth/reset-password',
           testStore.adminUser!.accessToken,
           {
             method: 'POST',

@@ -60,7 +60,7 @@ async function ensureUsersExist(): Promise<void> {
         refreshToken: string;
         user: { id: string; email: string };
       };
-    }>('/auth/register', {
+    }>('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -87,7 +87,7 @@ async function ensureUsersExist(): Promise<void> {
         refreshToken: string;
         user: { id: string; email: string };
       };
-    }>('/auth/register', {
+    }>('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -120,7 +120,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
       name: 'Get All Bundle Tiers - Public (no auth required)',
       fn: async () => {
         const response =
-          await apiRequest<BundleTiersListResponse>('/bundle-tiers');
+          await apiRequest<BundleTiersListResponse>('/v1/bundle-tiers');
 
         assertStatusCode(response, 200, 'Should return 200');
         assertNotNull(response.data.data, 'Should have data');
@@ -146,7 +146,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
       name: 'Get All Bundle Tiers - Only returns active bundles',
       fn: async () => {
         const response =
-          await apiRequest<BundleTiersListResponse>('/bundle-tiers');
+          await apiRequest<BundleTiersListResponse>('/v1/bundle-tiers');
 
         assertStatusCode(response, 200, 'Should return 200');
 
@@ -173,7 +173,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
 
         const bundleId = testStore.bundleTiers[0].id;
         const response = await apiRequest<BundleTierResponse>(
-          `/bundle-tiers/${bundleId}`
+          `/v1/bundle-tiers/${bundleId}`
         );
 
         assertStatusCode(response, 200, 'Should return 200');
@@ -189,7 +189,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
       name: 'Get Bundle Tier By ID - Invalid UUID format',
       fn: async () => {
         const response = await apiRequest<BundleTierResponse>(
-          '/bundle-tiers/invalid-uuid'
+          '/v1/bundle-tiers/invalid-uuid'
         );
 
         assertStatusCode(response, 400, 'Invalid UUID should return 400');
@@ -199,7 +199,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
       name: 'Get Bundle Tier By ID - Non-existent ID',
       fn: async () => {
         const response = await apiRequest<BundleTierResponse>(
-          '/bundle-tiers/00000000-0000-0000-0000-000000000000'
+          '/v1/bundle-tiers/00000000-0000-0000-0000-000000000000'
         );
 
         assertStatusCode(response, 404, 'Non-existent should return 404');
@@ -211,7 +211,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
       name: 'Admin Get All Bundle Tiers - Without auth',
       fn: async () => {
         const response = await apiRequest<BundleTiersListResponse>(
-          '/bundle-tiers/admin/all'
+          '/v1/bundle-tiers/admin/all'
         );
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
@@ -223,7 +223,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<BundleTiersListResponse>(
-          '/bundle-tiers/admin/all',
+          '/v1/bundle-tiers/admin/all',
           testStore.regularUser!.accessToken
         );
 
@@ -236,7 +236,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<BundleTiersListResponse>(
-          '/bundle-tiers/admin/all',
+          '/v1/bundle-tiers/admin/all',
           testStore.adminUser!.accessToken
         );
 
@@ -258,7 +258,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
     {
       name: 'Admin Create Bundle Tier - Without auth',
       fn: async () => {
-        const response = await apiRequest<BundleTierResponse>('/bundle-tiers', {
+        const response = await apiRequest<BundleTierResponse>('/v1/bundle-tiers', {
           method: 'POST',
           body: JSON.stringify({
             name: 'Test Bundle',
@@ -277,7 +277,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<BundleTierResponse>(
-          '/bundle-tiers',
+          '/v1/bundle-tiers',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -300,7 +300,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
 
         const bundleName = `Test_${randomString(6)}`;
         const response = await apiRequestAuth<BundleTierResponse>(
-          '/bundle-tiers',
+          '/v1/bundle-tiers',
           testStore.adminUser!.accessToken,
           {
             method: 'POST',
@@ -338,7 +338,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<BundleTierResponse>(
-          '/bundle-tiers',
+          '/v1/bundle-tiers',
           testStore.adminUser!.accessToken,
           {
             method: 'POST',
@@ -363,7 +363,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
 
         const bundleName = `Unlimited_${randomString(6)}`;
         const response = await apiRequestAuth<BundleTierResponse>(
-          '/bundle-tiers',
+          '/v1/bundle-tiers',
           testStore.adminUser!.accessToken,
           {
             method: 'POST',
@@ -400,7 +400,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
           '00000000-0000-0000-0000-000000000000';
 
         const response = await apiRequest<BundleTierResponse>(
-          `/bundle-tiers/${bundleId}`,
+          `/v1/bundle-tiers/${bundleId}`,
           {
             method: 'PUT',
             body: JSON.stringify({ name: 'Updated Name' }),
@@ -421,7 +421,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
           '00000000-0000-0000-0000-000000000000';
 
         const response = await apiRequestAuth<BundleTierResponse>(
-          `/bundle-tiers/${bundleId}`,
+          `/v1/bundle-tiers/${bundleId}`,
           testStore.regularUser!.accessToken,
           {
             method: 'PUT',
@@ -446,7 +446,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         const newName = `Updated_${randomString(6)}`;
 
         const response = await apiRequestAuth<BundleTierResponse>(
-          `/bundle-tiers/${bundleId}`,
+          `/v1/bundle-tiers/${bundleId}`,
           testStore.adminUser!.accessToken,
           {
             method: 'PUT',
@@ -473,7 +473,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<BundleTierResponse>(
-          '/bundle-tiers/00000000-0000-0000-0000-000000000000',
+          '/v1/bundle-tiers/00000000-0000-0000-0000-000000000000',
           testStore.adminUser!.accessToken,
           {
             method: 'PUT',
@@ -499,7 +499,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
           '00000000-0000-0000-0000-000000000000';
 
         const response = await apiRequest<{ message?: string }>(
-          `/bundle-tiers/${bundleId}`,
+          `/v1/bundle-tiers/${bundleId}`,
           { method: 'DELETE' }
         );
 
@@ -517,7 +517,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
           '00000000-0000-0000-0000-000000000000';
 
         const response = await apiRequestAuth<{ message?: string }>(
-          `/bundle-tiers/${bundleId}`,
+          `/v1/bundle-tiers/${bundleId}`,
           testStore.regularUser!.accessToken,
           { method: 'DELETE' }
         );
@@ -536,7 +536,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<{ message?: string }>(
-          `/bundle-tiers/${createdBundleId}`,
+          `/v1/bundle-tiers/${createdBundleId}`,
           testStore.adminUser!.accessToken,
           { method: 'DELETE' }
         );
@@ -556,7 +556,7 @@ export async function runBundleTierTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<{ message?: string }>(
-          '/bundle-tiers/00000000-0000-0000-0000-000000000000',
+          '/v1/bundle-tiers/00000000-0000-0000-0000-000000000000',
           testStore.adminUser!.accessToken,
           { method: 'DELETE' }
         );

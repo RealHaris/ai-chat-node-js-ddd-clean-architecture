@@ -92,6 +92,10 @@ export async function apiRequest<T = unknown>(
 ): Promise<ApiResponse<T>> {
   const url = `${BASE_URL}${endpoint}`;
 
+  // Log the endpoint URL
+  const method = options.method || 'GET';
+  console.log(`${colors.cyan}→ ${method} ${url}${colors.reset}`);
+
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };

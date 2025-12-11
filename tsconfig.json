@@ -3,7 +3,7 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "DOM", "ESNext"],
     "skipLibCheck": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
@@ -25,7 +25,7 @@
       "~/*": ["./src/*"]
     }
   },
-  "include": ["./src/**/*", "./global.d.ts", "./drizzle.config.ts"],
+  "include": ["./src/**/*", "./global.d.ts", "./drizzle.config.ts", "./test/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts", "node_modules/drizzle-orm/mysql-core/**/*", "node_modules/drizzle-orm/sqlite-core/**/*"],
   "ts-node": {
     "esm": true,

@@ -81,7 +81,7 @@ async function ensureUsersAndBundlesExist(): Promise<void> {
         refreshToken: string;
         user: { id: string; email: string };
       };
-    }>('/auth/register', {
+    }>('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -108,7 +108,7 @@ async function ensureUsersAndBundlesExist(): Promise<void> {
         priceMonthly: string;
         priceYearly: string;
       }>;
-    }>('/bundle-tiers');
+    }>('/v1/bundle-tiers');
 
     if (response.status === 200 && response.data.data) {
       testStore.bundleTiers = response.data.data;
@@ -126,7 +126,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
       name: 'Get My Subscriptions - Without authentication',
       fn: async () => {
         const response =
-          await apiRequest<SubscriptionsListResponse>('/subscriptions');
+          await apiRequest<SubscriptionsListResponse>('/v1/subscriptions');
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
       },
@@ -137,7 +137,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionsListResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           testStore.regularUser!.accessToken
         );
 
@@ -155,7 +155,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionsListResponse>(
-          '/subscriptions?active=true',
+          '/v1/subscriptions?active=true',
           testStore.regularUser!.accessToken
         );
 
@@ -169,7 +169,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
       name: 'Get Quota - Without authentication',
       fn: async () => {
         const response = await apiRequest<QuotaResponse>(
-          '/subscriptions/quota'
+          '/v1/subscriptions/quota'
         );
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
@@ -181,7 +181,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<QuotaResponse>(
-          '/subscriptions/quota',
+          '/v1/subscriptions/quota',
           testStore.regularUser!.accessToken
         );
 
@@ -209,7 +209,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
       name: 'Subscribe - Without authentication',
       fn: async () => {
         const response = await apiRequest<SubscriptionResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           {
             method: 'POST',
             body: JSON.stringify({
@@ -228,7 +228,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -251,7 +251,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -280,7 +280,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -309,7 +309,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -360,7 +360,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -388,7 +388,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
           createdSubscriptionId || '00000000-0000-0000-0000-000000000000';
 
         const response = await apiRequest<SubscriptionResponse>(
-          `/subscriptions/${subId}/auto-renewal`,
+          `/v1/subscriptions/${subId}/auto-renewal`,
           { method: 'PATCH' }
         );
 
@@ -401,7 +401,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions/invalid-uuid/auto-renewal',
+          '/v1/subscriptions/invalid-uuid/auto-renewal',
           testStore.regularUser!.accessToken,
           { method: 'PATCH' }
         );
@@ -415,7 +415,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions/00000000-0000-0000-0000-000000000000/auto-renewal',
+          '/v1/subscriptions/00000000-0000-0000-0000-000000000000/auto-renewal',
           testStore.regularUser!.accessToken,
           { method: 'PATCH' }
         );
@@ -438,7 +438,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          `/subscriptions/${createdSubscriptionId}/auto-renewal`,
+          `/v1/subscriptions/${createdSubscriptionId}/auto-renewal`,
           testStore.regularUser!.accessToken,
           { method: 'PATCH' }
         );
@@ -463,7 +463,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
           createdSubscriptionId || '00000000-0000-0000-0000-000000000000';
 
         const response = await apiRequest<SubscriptionResponse>(
-          `/subscriptions/${subId}/cancel`,
+          `/v1/subscriptions/${subId}/cancel`,
           { method: 'POST' }
         );
 
@@ -476,7 +476,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions/invalid-uuid/cancel',
+          '/v1/subscriptions/invalid-uuid/cancel',
           testStore.regularUser!.accessToken,
           { method: 'POST' }
         );
@@ -490,7 +490,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions/00000000-0000-0000-0000-000000000000/cancel',
+          '/v1/subscriptions/00000000-0000-0000-0000-000000000000/cancel',
           testStore.regularUser!.accessToken,
           { method: 'POST' }
         );
@@ -513,7 +513,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          `/subscriptions/${createdSubscriptionId}/cancel`,
+          `/v1/subscriptions/${createdSubscriptionId}/cancel`,
           testStore.regularUser!.accessToken,
           { method: 'POST' }
         );
@@ -533,7 +533,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          `/subscriptions/${createdSubscriptionId}/cancel`,
+          `/v1/subscriptions/${createdSubscriptionId}/cancel`,
           testStore.regularUser!.accessToken,
           { method: 'POST' }
         );
@@ -553,7 +553,7 @@ export async function runSubscriptionTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<QuotaResponse>(
-          '/subscriptions/quota',
+          '/v1/subscriptions/quota',
           testStore.regularUser!.accessToken
         );
 

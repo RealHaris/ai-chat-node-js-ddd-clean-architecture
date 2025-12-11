@@ -66,7 +66,7 @@ async function ensureUsersExist(): Promise<void> {
         refreshToken: string;
         user: { id: string; email: string };
       };
-    }>('/auth/register', {
+    }>('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -93,7 +93,7 @@ async function ensureUsersExist(): Promise<void> {
         refreshToken: string;
         user: { id: string; email: string };
       };
-    }>('/auth/register', {
+    }>('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -126,7 +126,7 @@ export async function runChatTests(): Promise<TestSummary> {
       name: 'Ask Question - Without authentication',
       fn: async () => {
         const response = await apiRequest<ChatMessageResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           {
             method: 'POST',
             body: JSON.stringify({ query: 'Hello, how are you?' }),
@@ -142,7 +142,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessageResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -159,7 +159,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessageResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -177,7 +177,7 @@ export async function runChatTests(): Promise<TestSummary> {
 
         const query = 'What is the capital of France?';
         const response = await apiRequestAuth<ChatMessageResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -219,7 +219,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessageResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -246,7 +246,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessageResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -273,7 +273,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessageResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           testStore.regularUser!.accessToken,
           {
             method: 'POST',
@@ -298,7 +298,7 @@ export async function runChatTests(): Promise<TestSummary> {
       name: 'Get Messages - Without authentication',
       fn: async () => {
         const response =
-          await apiRequest<ChatMessagesListResponse>('/chat/messages');
+          await apiRequest<ChatMessagesListResponse>('/v1/chat/messages');
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
       },
@@ -309,7 +309,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/messages',
+          '/v1/chat/messages',
           testStore.regularUser!.accessToken
         );
 
@@ -335,7 +335,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/messages?page=1&size=2',
+          '/v1/chat/messages?page=1&size=2',
           testStore.regularUser!.accessToken
         );
 
@@ -363,7 +363,7 @@ export async function runChatTests(): Promise<TestSummary> {
         await sleep(1000);
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/messages?status=completed',
+          '/v1/chat/messages?status=completed',
           testStore.regularUser!.accessToken
         );
 
@@ -384,7 +384,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/messages?status=pending',
+          '/v1/chat/messages?status=pending',
           testStore.regularUser!.accessToken
         );
 
@@ -402,7 +402,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/messages?status=invalid',
+          '/v1/chat/messages?status=invalid',
           testStore.regularUser!.accessToken
         );
 
@@ -419,7 +419,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/messages?page=-1',
+          '/v1/chat/messages?page=-1',
           testStore.regularUser!.accessToken
         );
 
@@ -436,7 +436,7 @@ export async function runChatTests(): Promise<TestSummary> {
       name: 'Admin List User Messages - Without authentication',
       fn: async () => {
         const response = await apiRequest<ChatMessagesListResponse>(
-          `/chat/list-user-messages/${testStore.regularUser?.id || 'test-id'}`
+          `/v1/chat/list-user-messages/${testStore.regularUser?.id || 'test-id'}`
         );
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
@@ -448,7 +448,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          `/chat/list-user-messages/${testStore.regularUser!.id}`,
+          `/v1/chat/list-user-messages/${testStore.regularUser!.id}`,
           testStore.regularUser!.accessToken
         );
 
@@ -461,7 +461,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/list-user-messages/invalid-uuid',
+          '/v1/chat/list-user-messages/invalid-uuid',
           testStore.adminUser!.accessToken
         );
 
@@ -478,7 +478,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/list-user-messages/00000000-0000-0000-0000-000000000000',
+          '/v1/chat/list-user-messages/00000000-0000-0000-0000-000000000000',
           testStore.adminUser!.accessToken
         );
 
@@ -498,7 +498,7 @@ export async function runChatTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          `/chat/list-user-messages/${testStore.regularUser!.id}`,
+          `/v1/chat/list-user-messages/${testStore.regularUser!.id}`,
           testStore.adminUser!.accessToken
         );
 
@@ -532,7 +532,7 @@ export async function runChatTests(): Promise<TestSummary> {
         await sleep(6000);
 
         const response = await apiRequestAuth<ChatMessagesListResponse>(
-          '/chat/messages',
+          '/v1/chat/messages',
           testStore.regularUser!.accessToken
         );
 

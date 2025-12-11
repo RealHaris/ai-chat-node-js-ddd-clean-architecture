@@ -99,7 +99,7 @@ export async function runE2ETests(): Promise<TestSummary> {
         userEmail = randomEmail();
         userPassword = 'E2EPassword123';
 
-        const response = await apiRequest<AuthResponse>('/auth/register', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: userEmail,
@@ -126,7 +126,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 1.2: Check initial quota (free tier)',
       fn: async () => {
         const response = await apiRequestAuth<QuotaResponse>(
-          '/subscriptions/quota',
+          '/v1/subscriptions/quota',
           accessToken
         );
 
@@ -151,7 +151,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 1.3: Send first chat message',
       fn: async () => {
         const response = await apiRequestAuth<ChatResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           accessToken,
           {
             method: 'POST',
@@ -170,7 +170,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 1.4: Verify quota decreased',
       fn: async () => {
         const response = await apiRequestAuth<QuotaResponse>(
-          '/subscriptions/quota',
+          '/v1/subscriptions/quota',
           accessToken
         );
 
@@ -188,7 +188,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       fn: async () => {
         // Send second message
         const response2 = await apiRequestAuth<ChatResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           accessToken,
           {
             method: 'POST',
@@ -199,7 +199,7 @@ export async function runE2ETests(): Promise<TestSummary> {
 
         // Send third message
         const response3 = await apiRequestAuth<ChatResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           accessToken,
           {
             method: 'POST',
@@ -215,7 +215,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 1.6: Fourth message should fail (quota exceeded)',
       fn: async () => {
         const response = await apiRequestAuth<ChatResponse>(
-          '/chat/ask-question',
+          '/v1/chat/ask-question',
           accessToken,
           {
             method: 'POST',
@@ -236,7 +236,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 1.7: Get all messages',
       fn: async () => {
         const response = await apiRequestAuth<MessagesResponse>(
-          '/chat/messages',
+          '/v1/chat/messages',
           accessToken
         );
 
@@ -254,7 +254,7 @@ export async function runE2ETests(): Promise<TestSummary> {
     {
       name: 'E2E Journey 2.1: Get available bundle tiers',
       fn: async () => {
-        const response = await apiRequest<BundleTiersResponse>('/bundle-tiers');
+        const response = await apiRequest<BundleTiersResponse>('/v1/bundle-tiers');
 
         assertStatusCode(response, 200, 'Get bundles should succeed');
         assertNotNull(response.data.data, 'Should have data');
@@ -279,7 +279,7 @@ export async function runE2ETests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          '/subscriptions',
+          '/v1/subscriptions',
           accessToken,
           {
             method: 'POST',
@@ -312,7 +312,7 @@ export async function runE2ETests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<QuotaResponse>(
-          '/subscriptions/quota',
+          '/v1/subscriptions/quota',
           accessToken
         );
 
@@ -335,7 +335,7 @@ export async function runE2ETests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          `/subscriptions/${subscriptionId}/auto-renewal`,
+          `/v1/subscriptions/${subscriptionId}/auto-renewal`,
           accessToken,
           { method: 'PATCH' }
         );
@@ -353,7 +353,7 @@ export async function runE2ETests(): Promise<TestSummary> {
         }
 
         const response = await apiRequestAuth<SubscriptionResponse>(
-          `/subscriptions/${subscriptionId}/cancel`,
+          `/v1/subscriptions/${subscriptionId}/cancel`,
           accessToken,
           { method: 'POST' }
         );
@@ -367,7 +367,7 @@ export async function runE2ETests(): Promise<TestSummary> {
     {
       name: 'E2E Journey 3.1: Refresh access token',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/refresh', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/refresh', {
           method: 'POST',
           body: JSON.stringify({ refreshToken }),
         });
@@ -386,7 +386,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 3.2: Use new token to access protected endpoint',
       fn: async () => {
         const response = await apiRequestAuth<{ data?: { id: string } }>(
-          '/users/me',
+          '/v1/users/me',
           accessToken
         );
 
@@ -403,7 +403,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       fn: async () => {
         const newPhone = '+1234567890';
         const response = await apiRequestAuth<{ data?: { phone: string } }>(
-          '/users/me',
+          '/v1/users/me',
           accessToken,
           {
             method: 'PATCH',
@@ -424,7 +424,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 4.2: Verify profile update persisted',
       fn: async () => {
         const response = await apiRequestAuth<{ data?: { phone: string } }>(
-          '/users/me',
+          '/v1/users/me',
           accessToken
         );
 
@@ -450,7 +450,7 @@ export async function runE2ETests(): Promise<TestSummary> {
       name: 'E2E Journey 5.2: Verify messages are completed',
       fn: async () => {
         const response = await apiRequestAuth<MessagesResponse>(
-          '/chat/messages?status=completed',
+          '/v1/chat/messages?status=completed',
           accessToken
         );
 
@@ -478,7 +478,7 @@ export async function runE2ETests(): Promise<TestSummary> {
     {
       name: 'E2E Journey 6.1: Login with credentials',
       fn: async () => {
-        const response = await apiRequest<AuthResponse>('/auth/login', {
+        const response = await apiRequest<AuthResponse>('/v1/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             email: userEmail,

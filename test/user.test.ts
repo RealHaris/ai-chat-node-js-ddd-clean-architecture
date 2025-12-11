@@ -77,7 +77,7 @@ async function ensureUsersExist(): Promise<void> {
         refreshToken: string;
         user: { id: string; email: string };
       };
-    }>('/auth/register', {
+    }>('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -105,7 +105,7 @@ async function ensureUsersExist(): Promise<void> {
         refreshToken: string;
         user: { id: string; email: string };
       };
-    }>('/auth/register', {
+    }>('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -135,7 +135,7 @@ export async function runUserTests(): Promise<TestSummary> {
     {
       name: 'Get Me - Without authentication',
       fn: async () => {
-        const response = await apiRequest<UserResponse>('/users/me');
+        const response = await apiRequest<UserResponse>('/v1/users/me');
 
         assertStatusCode(
           response,
@@ -150,7 +150,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UserResponse>(
-          '/users/me',
+          '/v1/users/me',
           testStore.regularUser!.accessToken
         );
 
@@ -169,7 +169,7 @@ export async function runUserTests(): Promise<TestSummary> {
       name: 'Get Me - With invalid token',
       fn: async () => {
         const response = await apiRequestAuth<UserResponse>(
-          '/users/me',
+          '/v1/users/me',
           'invalid-token'
         );
 
@@ -183,7 +183,7 @@ export async function runUserTests(): Promise<TestSummary> {
         const fakeToken =
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
         const response = await apiRequestAuth<UserResponse>(
-          '/users/me',
+          '/v1/users/me',
           fakeToken
         );
 
@@ -195,7 +195,7 @@ export async function runUserTests(): Promise<TestSummary> {
     {
       name: 'Update Me - Without authentication',
       fn: async () => {
-        const response = await apiRequest<UserResponse>('/users/me', {
+        const response = await apiRequest<UserResponse>('/v1/users/me', {
           method: 'PATCH',
           body: JSON.stringify({ phone: '+9876543210' }),
         });
@@ -210,7 +210,7 @@ export async function runUserTests(): Promise<TestSummary> {
 
         const newPhone = '+1122334455';
         const response = await apiRequestAuth<UserResponse>(
-          '/users/me',
+          '/v1/users/me',
           testStore.regularUser!.accessToken,
           {
             method: 'PATCH',
@@ -233,7 +233,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UserResponse>(
-          '/users/me',
+          '/v1/users/me',
           testStore.regularUser!.accessToken,
           {
             method: 'PATCH',
@@ -254,7 +254,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UserResponse>(
-          '/users/me',
+          '/v1/users/me',
           testStore.regularUser!.accessToken,
           {
             method: 'PATCH',
@@ -285,7 +285,7 @@ export async function runUserTests(): Promise<TestSummary> {
     {
       name: 'Admin Get All Users - Without authentication',
       fn: async () => {
-        const response = await apiRequest<UsersListResponse>('/users');
+        const response = await apiRequest<UsersListResponse>('/v1/users');
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
       },
@@ -296,7 +296,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UsersListResponse>(
-          '/users',
+          '/v1/users',
           testStore.regularUser!.accessToken
         );
 
@@ -309,7 +309,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<UsersListResponse>(
-          '/users',
+          '/v1/users',
           testStore.adminUser!.accessToken
         );
 
@@ -335,7 +335,7 @@ export async function runUserTests(): Promise<TestSummary> {
       name: 'Admin Get User By ID - Without authentication',
       fn: async () => {
         const response = await apiRequest<UserResponse>(
-          `/users/${testStore.regularUser?.id || 'test-id'}`
+          `/v1/users/${testStore.regularUser?.id || 'test-id'}`
         );
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
@@ -347,7 +347,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UserResponse>(
-          `/users/${testStore.regularUser!.id}`,
+          `/v1/users/${testStore.regularUser!.id}`,
           testStore.regularUser!.accessToken
         );
 
@@ -360,7 +360,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<UserResponse>(
-          '/users/invalid-uuid',
+          '/v1/users/invalid-uuid',
           testStore.adminUser!.accessToken
         );
 
@@ -377,7 +377,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<UserResponse>(
-          '/users/00000000-0000-0000-0000-000000000000',
+          '/v1/users/00000000-0000-0000-0000-000000000000',
           testStore.adminUser!.accessToken
         );
 
@@ -394,7 +394,7 @@ export async function runUserTests(): Promise<TestSummary> {
       name: 'Admin Get User Stats - Without authentication',
       fn: async () => {
         const response = await apiRequest<UserStatsResponse>(
-          `/users/get-user-stats/${testStore.regularUser?.id || 'test-id'}`
+          `/v1/users/get-user-stats/${testStore.regularUser?.id || 'test-id'}`
         );
 
         assertStatusCode(response, 401, 'Unauthenticated should return 401');
@@ -406,7 +406,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UserStatsResponse>(
-          `/users/get-user-stats/${testStore.regularUser!.id}`,
+          `/v1/users/get-user-stats/${testStore.regularUser!.id}`,
           testStore.regularUser!.accessToken
         );
 
@@ -420,7 +420,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UserStatsResponse>(
-          `/users/get-user-stats/${testStore.regularUser!.id}`,
+          `/v1/users/get-user-stats/${testStore.regularUser!.id}`,
           testStore.adminUser!.accessToken
         );
 
@@ -442,7 +442,7 @@ export async function runUserTests(): Promise<TestSummary> {
       name: 'Admin Update User - Without authentication',
       fn: async () => {
         const response = await apiRequest<UserResponse>(
-          `/users/${testStore.regularUser?.id || 'test-id'}`,
+          `/v1/users/${testStore.regularUser?.id || 'test-id'}`,
           {
             method: 'PATCH',
             body: JSON.stringify({ phone: '+0000000000' }),
@@ -458,7 +458,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<UserResponse>(
-          `/users/${testStore.regularUser!.id}`,
+          `/v1/users/${testStore.regularUser!.id}`,
           testStore.regularUser!.accessToken,
           {
             method: 'PATCH',
@@ -475,7 +475,7 @@ export async function runUserTests(): Promise<TestSummary> {
       name: 'Admin Delete User - Without authentication',
       fn: async () => {
         const response = await apiRequest<{ message?: string }>(
-          `/users/${testStore.regularUser?.id || 'test-id'}`,
+          `/v1/users/${testStore.regularUser?.id || 'test-id'}`,
           { method: 'DELETE' }
         );
 
@@ -488,7 +488,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.regularUser, 'Regular user should exist');
 
         const response = await apiRequestAuth<{ message?: string }>(
-          `/users/${testStore.regularUser!.id}`,
+          `/v1/users/${testStore.regularUser!.id}`,
           testStore.regularUser!.accessToken,
           { method: 'DELETE' }
         );
@@ -502,7 +502,7 @@ export async function runUserTests(): Promise<TestSummary> {
         assertNotNull(testStore.adminUser, 'Admin user should exist');
 
         const response = await apiRequestAuth<{ message?: string }>(
-          '/users/invalid-uuid',
+          '/v1/users/invalid-uuid',
           testStore.adminUser!.accessToken,
           { method: 'DELETE' }
         );

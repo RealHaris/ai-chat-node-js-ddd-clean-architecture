@@ -1,10 +1,8 @@
 import 'reflect-metadata';
-import { container } from 'tsyringe';
-
-import { HttpServer } from '~/shared/infra/http/server';
+import { startServer } from './app';
 
 async function bootstrap() {
-  container.resolve(HttpServer).startServer();
+  await startServer();
 }
 
 void bootstrap();
