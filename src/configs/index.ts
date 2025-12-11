@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-dotenv.config();
+// Load environment variables - try .env.local first, then .env
+dotenv.config({ path: '.env.local' });
+dotenv.config(); // This will not override existing values from .env.local
 
 // Environment validation schema
 const envSchema = z.object({

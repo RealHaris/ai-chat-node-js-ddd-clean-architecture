@@ -27,27 +27,34 @@ export default defineConfig({
       config.externalsType = 'module';
       // Externalize all node_modules
       config.externals = [
+        // Express and middleware
         'express',
         'cors',
         'helmet',
         'multer',
+        // Environment
         'dotenv',
+        // Database
         'drizzle-orm',
         'pg',
         'postgres',
+        // DI and messaging
         'reflect-metadata',
         'tsyringe',
         'types-ddd',
+        '@node-ts/bus-core',
+        '@node-ts/bus-messages',
+        // Utilities
         'uuid',
         'zod',
         'zod-validation-error',
-        '@node-ts/bus-core',
-        '@node-ts/bus-messages',
         'bcrypt',
-        'bullmq',
-        'ioredis',
-        'node-cron',
         'jsonwebtoken',
+        // Redis and queues
+        'ioredis',
+        'bullmq',
+        // Cron
+        'node-cron',
         // Node.js built-ins
         'fs',
         'path',
@@ -62,6 +69,15 @@ export default defineConfig({
         'util',
         'buffer',
         'child_process',
+        'net',
+        'tls',
+        'dns',
+        'assert',
+        'tty',
+        'zlib',
+        'string_decoder',
+        'timers',
+        'cluster',
       ];
       return config;
     },

@@ -27,7 +27,14 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "test": "tsx test/run-all.ts",
+    "test:auth": "tsx test/auth.test.ts",
+    "test:user": "tsx test/user.test.ts",
+    "test:bundle": "tsx test/bundle-tier.test.ts",
+    "test:subscription": "tsx test/subscription.test.ts",
+    "test:chat": "tsx test/chat.test.ts",
+    "test:e2e": "tsx test/e2e.test.ts"
   },
   "devDependencies": {
     "@mapbox/node-pre-gyp": "^2.0.3",
@@ -63,8 +70,6 @@
     "node": ">=18.12.0"
   },
   "dependencies": {
-    "@bull-board/api": "^6.15.0",
-    "@bull-board/express": "^6.15.0",
     "@node-ts/bus-core": "^1.1.7",
     "@node-ts/bus-messages": "^1.1.0",
     "bcrypt": "^6.0.0",
