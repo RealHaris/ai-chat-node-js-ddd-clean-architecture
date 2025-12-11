@@ -1,0 +1,12 @@
+{
+  "watch": [
+    "src"
+  ],
+  "ext": "ts",
+  "exec": "npm run start",
+  "delay": 500,
+  "verbose": false,
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

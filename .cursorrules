@@ -1,0 +1,432 @@
+# Node.js DDD & Clean Architecture Cursor Rules
+
+## Project Overview
+This is a Node.js application implementing Domain Driven Design (DDD) and Clean Architecture principles with modern tooling. The codebase uses Express.js for HTTP handling, Drizzle ORM for database operations, and direct TypeScript compilation for builds. Code quality is enforced with ESLint and Prettier.
+
+## Architecture Layers
+
+### 1. Domain Layer (`src/modules/*/domain/`)
+- **Purpose**: Contains business logic, rules, and domain models
+- **Components**:
+  - `entity/`: Domain entities (Aggregate Roots)
+  - `event/`: Domain events
+  - `interface/`: Domain interfaces and schemas
+  - `repository.ts`: Repository contracts
+
+### 2. Application Layer (`src/modules/*/application/`)
+- **Purpose**: Orchestrates domain objects, handles use cases
+- **Components**:
+  - `dto/`: Data Transfer Objects for input/output
+  - `usecase/`: Application use cases (business workflows)
+
+### 3. Infrastructure Layer (`src/modules/*/infra/`)
+- **Purpose**: Technical implementations, external integrations
+- **Components**:
+  - `persistence/`: Database models and repositories
+  - `http/`: Controllers, routes, contracts
+
+## Coding Conventions & Patterns
+
+### File Structure
+```
+src/modules/{module}/
+├── domain/
+│   ├── entity/
+│   │   └── {entity}.ts
+│   ├── event/
+│   │   └── {event}.ts
+│   └── interface/
+│       ├── repository.ts
+│       └── {entity}.ts
+├── application/
+│   ├── dto/
+│   │   └── dto.ts
+│   └── usecase/
+│       └── {usecase}.ts
+└── infra/
+    ├── http/
+    │   ├── controller/
+    │   │   └── controller.ts
+    │   └── contract/
+    │       └── api.ts
+    └── persistence/
+        ├── model/
+        │   └── {entity}.ts
+        └── repository/
+            ├── read.ts
+            └── write.ts
+```
+
+### Naming Conventions
+
+#### Files & Directories
+- Use lowercase with underscores: `user_create.ts`, `user_repository.ts`
+- Domain interfaces: `{entity}.ts` (e.g., `user.ts`)
+- Use cases: descriptive action names `create.ts`, `get_all.ts`, `get.ts`
+- Events: past tense `user_added.ts`, `user_updated.ts`
+
+#### Classes & Types
+- PascalCase for classes: `UserController`, `UserCreateUseCase`
+- Interface prefix: `IUserRepository`, `IUserAttributes`
+- Schema suffix: `UserAttributesSchema`, `CreateUserDTOSchema`
+- Result types: `Result<UserModel, string>`
+
+#### Variables & Properties
+- camelCase: `userRepository`, `createUserDTO`
+- Private properties: `_userRepository` (optional, not enforced)
+- Constants: `UPPER_SNAKE_CASE`
+
+### Dependency Injection
+
+#### Container Registration
+```typescript
+@injectable()
+export class UserController {
+  constructor(
+    @inject(UserRepository) private userRepository: IUserRepository
+  ) {}
+}
+```
+
+#### Repository Registration
+- Read repositories: `@singleton()` decorator
+- Write repositories: `@singleton()` decorator
+- Controllers: `@injectable()` decorator
+
+### Domain Driven Design Patterns
+
+#### Entity Creation (Factory Pattern)
+```typescript
+export class User extends Aggregate<UserCreationAttributes> {
+  private constructor(props: UserCreationAttributes) {
+    super(props);
+  }
+
+  static create(props: UserCreationAttributes): Result<User> {
+    const user = new User(props);
+    const userAdded = new UserAdded();
+    user.addEvent(userAdded);
+    return Result.Ok(user);
+  }
+}
+```
+
+#### Domain Events
+```typescript
+export class UserAdded extends EventHandler<User> {
+  static readonly NAME = "user_added";
+  $names = UserAdded.NAME;
+  $version = 0;
+
+  async dispatch(aggregate: User) {
+    const model = aggregate.toObject();
+    console.log("User Added", model);
+  }
+}
+```
+
+#### Repository Interfaces
+```typescript
+export interface IUserReadRepository {
+  getAll(): Promise<User[]>;
+  getByUserUuid(userUuid: string): Promise<User>;
+}
+
+export interface IUserWriteRepository {
+  save(user: User): Promise<User>;
+}
+```
+
+### Validation & Error Handling
+
+#### Zod Schemas
+```typescript
+export const UserAttributesSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email("Not a valid email"),
+  password: z.string().min(6),
+});
+
+export type IUserAttributes = z.infer<typeof UserAttributesSchema>;
+```
+
+#### Result Pattern
+```typescript
+async execute(dto: CreateUserDTO): Promise<Result<User, string>> {
+  const schema = CreateUserDTOSchema.safeParse(dto);
+  if (!schema.success) {
+    return Result.fail(fromZodError(schema.error).toString());
+  }
+  // ... business logic
+  return Result.Ok(createdUser);
+}
+```
+
+#### Custom Errors
+```typescript
+export class ValidationError extends ApplicationError {
+  constructor(message: string, details?: unknown) {
+    super(message, details);
+    this.name = "ValidationError";
+  }
+}
+```
+
+### CQRS Pattern
+
+#### Read Repository
+- Query-focused methods
+- Optimized for reading
+- May use raw SQL for complex queries
+- Returns model instances
+
+#### Write Repository
+- Command-focused methods
+- Handles transactions
+- Implements business rules
+- Returns persisted models
+
+### HTTP Layer Patterns
+
+#### Controller Structure
+```typescript
+@injectable()
+export class UserController extends BaseController {
+  constructor(
+    @inject(UserCreateUseCase) private userCreateUseCase: UserCreateUseCase
+  ) {}
+
+  create = async (req: express.Request, res: express.Response) => {
+    try {
+      const payload = req.body;
+      const result = await this.userCreateUseCase.execute(payload);
+
+      if (result.isFail()) {
+        res.status(HttpStatus.BAD_REQUEST).json({ error: result.error() });
+        return;
+      }
+
+      res.status(HttpStatus.OK).json({ user: result.value() });
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        error: 'An error occurred while creating the user.',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+}
+```
+
+#### Route Registration
+```typescript
+register() {
+  this.router.post("/", this.create);
+  this.router.get("/", this.getAll);
+  return this.router;
+}
+```
+
+### Middleware Chain
+Order matters for proper request handling:
+1. `context` - Request context setup (AsyncLocalStorage)
+2. `security` - Security headers (helmet)
+3. `multer.any()` - Multipart form data parsing
+4. `express.json()` - JSON body parsing
+5. `express.urlencoded()` - URL-encoded body parsing
+6. `cors` - CORS handling
+7. `logger` - Request logging
+8. `requestId` - Request ID generation
+
+### Transaction Management
+
+#### Drizzle ORM Transactions
+```typescript
+// Drizzle handles transactions through the db instance
+// For complex operations, use db.transaction()
+
+const db = drizzle(client);
+
+// Simple transaction example
+await db.transaction(async (tx) => {
+  // Perform multiple operations in a transaction
+  await tx.insert(users).values(userData);
+  await tx.insert(customers).values(customerData);
+});
+```
+
+### Database Patterns
+
+#### Drizzle Schema Definition
+```typescript
+import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
+
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email'),
+  password: text('password').notNull(),
+  phone: text('phone'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => ({
+  emailIdx: index('users_email_idx').on(table.email),
+  phoneIdx: index('users_phone_idx').on(table.phone),
+}));
+```
+
+#### Migration Strategy
+- Use Drizzle Kit for migration generation and management
+- Type-safe schema definitions
+- Automatic migration generation with `drizzle-kit generate:pg`
+- Apply migrations with `drizzle-kit push:pg`
+
+### Logging Patterns
+
+#### Structured Logging
+```typescript
+const logger = useLogger("Context Name");
+logger.log("Method", "path");
+logger.error([startTime, error], "Error message");
+```
+
+#### Request Context
+- Use AsyncLocalStorage for request-scoped data
+- Request ID generation and propagation
+- User context storage
+
+### Testing Patterns
+
+#### Test Structure
+- Unit tests for domain logic
+- Integration tests for use cases
+- E2E tests for HTTP endpoints
+- Use Chai + Mocha stack
+
+### Configuration Management
+
+#### Environment Variables
+- Centralized in `src/configs/index.ts`
+- Type-safe configuration
+- Environment-specific values
+
+### Build & Development
+
+#### Scripts
+- `dev`: tsx watch for hot reloading during development
+- `build`: Direct TypeScript compilation to JavaScript
+- `start`: Production server from compiled JavaScript
+- `format`: Prettier code formatting
+- `lint`: ESLint code quality checks
+- `migration:generate`: Generate Drizzle migrations
+- `migration:push`: Apply Drizzle migrations
+
+#### TypeScript Configuration
+- Strict mode enabled
+- Path mapping with `~/*`
+- ES2020 target with ES modules
+- Decorator support for dependency injection
+
+#### Code Quality Tools
+- **Prettier**: Consistent code formatting (single quotes, semicolons, 80 char width)
+- **ESLint**: TypeScript-aware linting with modern flat config
+- **Import sorting**: Automatic import organization
+
+## Code Quality Rules
+
+### General Principles
+1. **Single Responsibility**: Each class/method has one reason to change
+2. **Dependency Inversion**: Depend on abstractions, not concretions
+3. **Domain First**: Business logic drives technical decisions
+4. **CQRS**: Separate read and write concerns
+5. **Result Pattern**: Explicit error handling
+6. **Validation**: Input validation with Zod schemas
+
+### Import Organization
+```typescript
+// 1. Node.js built-ins
+import os from 'os';
+
+// 2. Third-party libraries
+import express from 'express';
+import { injectable } from 'tsyringe';
+import { z } from 'zod';
+
+// 3. Drizzle ORM (database)
+import { eq } from 'drizzle-orm';
+import { users } from '~/shared/infra/db/schemas/users';
+
+// 4. Project imports (use ~ alias)
+import Config from '~/configs';
+import { User } from '~/shared/infra/db/types';
+import { User as UserEntity } from '~/modules/user/domain/entity/user';
+```
+
+### Error Handling
+- Use custom error classes extending `ApplicationError`
+- Prefer Result pattern over exceptions for business logic
+- Use exceptions for infrastructure failures
+- Log errors with context
+
+### Async/Await
+- Always use async/await over Promises
+- Proper error propagation
+- Transaction boundaries in use cases
+
+### Type Safety
+- Use TypeScript strict mode
+- Define interfaces for all contracts
+- Use Drizzle ORM for type-safe database operations
+- Use Zod for runtime validation
+- Prefer specific types over `any` (acceptable in utility functions)
+- Leverage TypeScript's inference with Drizzle schemas
+
+## Development Workflow
+
+### Adding New Features
+1. Start with domain modeling (entities, value objects)
+2. Define repository interfaces
+3. Implement use cases in application layer
+4. Create infrastructure implementations
+5. Add HTTP controllers and routes
+6. Write tests
+
+### Code Review Checklist
+- [ ] Domain logic isolated from infrastructure
+- [ ] Proper dependency injection with tsyringe
+- [ ] Repository pattern with Drizzle ORM types
+- [ ] CQRS separation maintained (read/write repositories)
+- [ ] Validation with Zod schemas
+- [ ] Error handling with Result pattern
+- [ ] Drizzle transactions used appropriately
+- [ ] TypeScript strict mode compliance
+- [ ] Prettier formatting applied
+- [ ] ESLint rules followed (no critical errors)
+- [ ] Proper async/await patterns
+- [ ] Database schemas properly indexed
+- [ ] Migration files generated and tested
+
+## Modern Tooling & Tech Stack
+
+### HTTP Framework
+- **Express.js**: Fast, unopinionated web framework
+- **Middleware**: Custom chain with security, CORS, logging
+- **Body Parsing**: Multer for multipart, express.json() for JSON
+
+### Database & ORM
+- **Drizzle ORM**: Type-safe SQL query builder for PostgreSQL
+- **Schema Definition**: Type-safe table definitions with relations
+- **Migrations**: drizzle-kit for generation and application
+
+### Development Tools
+- **tsx**: TypeScript execution and hot reloading
+- **Prettier**: Code formatting with consistent standards
+- **ESLint**: Modern flat config with TypeScript support
+- **Drizzle Kit**: Database migration management
+
+### Code Quality Standards
+- **0 ESLint errors** in production code
+- **Prettier formatting** enforced across all files
+- **TypeScript strict mode** enabled
+- **Clean architecture** patterns maintained
+
+This ruleset ensures consistency with modern DDD and Clean Architecture patterns while leveraging current best practices and tooling.
