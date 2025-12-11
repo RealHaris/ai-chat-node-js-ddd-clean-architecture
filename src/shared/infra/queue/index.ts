@@ -6,18 +6,20 @@ import Config from '~/configs';
 const connectionOptions: QueueOptions['connection'] = {
   host: Config.REDIS_HOST,
   port: Config.REDIS_PORT,
-  password: Config.REDIS_PASSWORD || undefined,
+  password: Config.REDIS_USE_PASSWORD === 'yes' ? Config.REDIS_PASSWORD : undefined,
 };
 
 // Queue names
 export const QUEUE_NAMES = {
-  SUBSCRIPTION_RENEWAL: 'subscription-renewal',
-  FREE_TIER_RESET: 'free-tier-reset',
+  SUBSCRIPTION_EXPIRY: 'subscription-expiry',
 } as const;
 
-// Subscription renewal queue
-export const subscriptionRenewalQueue = new Queue(
-  QUEUE_NAMES.SUBSCRIPTION_RENEWAL,
+// Subscription expiry queue - handles subscription expiry processing
+// When a subscription expires:
+// - If autoRenewal=true: attempt payment renewal
+// - If autoRenewal=false or payment fails: shift user to free tier
+export const subscriptionExpiryQueue = new Queue(
+  QUEUE_NAMES.SUBSCRIPTION_EXPIRY,
   {
     connection: connectionOptions,
     defaultJobOptions: {
@@ -32,24 +34,9 @@ export const subscriptionRenewalQueue = new Queue(
   }
 );
 
-// Free tier reset queue
-export const freeTierResetQueue = new Queue(QUEUE_NAMES.FREE_TIER_RESET, {
-  connection: connectionOptions,
-  defaultJobOptions: {
-    removeOnComplete: 10,
-    removeOnFail: 50,
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 5000,
-    },
-  },
-});
-
 // Export all queues
 export const queues = {
-  subscriptionRenewalQueue,
-  freeTierResetQueue,
+  subscriptionExpiryQueue,
 };
 
 export default queues;

@@ -9,7 +9,7 @@ export const getRedisClient = (): Redis => {
     redisClient = new Redis({
       host: Config.REDIS_HOST,
       port: Config.REDIS_PORT,
-      password: Config.REDIS_PASSWORD || undefined,
+      password: Config.REDIS_USE_PASSWORD === 'yes' ? Config.REDIS_PASSWORD : undefined,
       db: Config.REDIS_DB,
       maxRetriesPerRequest: null, // Required for BullMQ
       enableReadyCheck: false,

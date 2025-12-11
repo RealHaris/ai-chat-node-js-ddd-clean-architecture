@@ -1,11 +1,15 @@
 import express from 'express';
 import { injectable } from 'tsyringe';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 
 import Config from '~/configs';
 import { initDB, initMigration } from '~/shared/infra/db/config/config';
 import { initModels } from '~/shared/infra/db/models/models';
 import registerApplicationMiddlewares from '~/shared/infra/http/middleware';
 import registerApplicationRouters from '~/shared/infra/http/controller';
+import { subscriptionExpiryQueue } from '~/shared/infra/queue';
 
 @injectable()
 export class HttpServer {

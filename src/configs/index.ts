@@ -20,6 +20,7 @@ const envSchema = z.object({
   // Redis
   REDIS_HOST: z.string().min(1, 'REDIS_HOST is required'),
   REDIS_PORT: z.string().transform(Number).default('6379'),
+  REDIS_USE_PASSWORD: z.enum(['yes', 'no']).default('no'),
   REDIS_PASSWORD: z.string().optional().default(''),
   REDIS_DB: z.string().transform(Number).default('0'),
 
@@ -97,6 +98,7 @@ abstract class Config {
   // Redis
   static readonly REDIS_HOST = env.REDIS_HOST;
   static readonly REDIS_PORT = env.REDIS_PORT;
+  static readonly REDIS_USE_PASSWORD = env.REDIS_USE_PASSWORD;
   static readonly REDIS_PASSWORD = env.REDIS_PASSWORD;
   static readonly REDIS_DB = env.REDIS_DB;
 

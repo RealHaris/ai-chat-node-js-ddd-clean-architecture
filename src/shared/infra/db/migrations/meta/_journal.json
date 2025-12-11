@@ -15,6 +15,13 @@
       "when": 1765481568863,
       "tag": "0001_acoustic_silver_surfer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765486643717,
+      "tag": "0002_wild_sway",
+      "breakpoints": true
     }
   ]
 }

@@ -63,6 +63,8 @@
     "node": ">=18.12.0"
   },
   "dependencies": {
+    "@bull-board/api": "^6.15.0",
+    "@bull-board/express": "^6.15.0",
     "@node-ts/bus-core": "^1.1.7",
     "@node-ts/bus-messages": "^1.1.0",
     "bcrypt": "^6.0.0",
@@ -70,6 +72,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.33.0",
+    "esbuild": "^0.27.1",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "ioredis": "^5.8.2",

@@ -15,6 +15,12 @@ import { BillingCycle } from '~/modules/subscription/domain/interface/subscripti
 import { SubscriptionReadRepository } from '~/modules/subscription/infra/persistence/repository/read';
 import { SubscriptionWriteRepository } from '~/modules/subscription/infra/persistence/repository/write';
 import { NotFoundError, ValidationError } from '~/shared/infra/error';
+import { Subscription as SubscriptionDBType } from '~/shared/infra/db/types';
+import { subscriptionExpiryQueue } from '~/shared/infra/queue';
+import { SubscriptionExpiryJobData } from '~/shared/infra/queue/workers/subscription_expiry.worker';
+import { useLogger } from '~/shared/packages/logger/logger';
+
+const logger = useLogger('SubscribeUseCase');
 
 interface SubscribeInput {
   userId: string;
@@ -129,6 +135,9 @@ export class SubscribeUseCase implements IUseCase<
       bundleTier.maxMessages
     );
 
+    // Schedule subscription expiry job
+    await this.scheduleExpiryJob(createdSubscription, endDate);
+
     // Return response
     const response: SubscriptionResponseDTO = {
       id: createdSubscription.id,
@@ -163,5 +172,38 @@ export class SubscribeUseCase implements IUseCase<
     }
 
     return endDate;
+  }
+
+  /**
+   * Schedule a delayed job for the subscription expiry date.
+   * When the job runs, it will either attempt renewal (if autoRenewal=true)
+   * or shift the user to free tier.
+   */
+  private async scheduleExpiryJob(
+    subscription: SubscriptionDBType,
+    endDate: Date
+  ): Promise<void> {
+    const now = new Date();
+    const delay = Math.max(endDate.getTime() - now.getTime(), 0);
+
+    const jobData: SubscriptionExpiryJobData = {
+      subscriptionId: subscription.id,
+      userId: subscription.userId,
+      bundleName: subscription.bundleName,
+      bundleMaxMessages: subscription.bundleMaxMessages,
+      bundlePrice: subscription.bundlePrice,
+      billingCycle: subscription.billingCycle as 'monthly' | 'yearly',
+    };
+
+    await subscriptionExpiryQueue.add(`expiry-${subscription.id}`, jobData, {
+      delay,
+      jobId: `expiry-${subscription.id}-${endDate.getTime()}`,
+    });
+
+    logger.log(`Scheduled expiry job for subscription ${subscription.id}`, {
+      endDate,
+      delayMs: delay,
+      delayDays: Math.round(delay / (1000 * 60 * 60 * 24)),
+    });
   }
 }
