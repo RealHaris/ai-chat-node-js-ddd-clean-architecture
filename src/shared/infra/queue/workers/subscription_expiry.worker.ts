@@ -1,15 +1,14 @@
 import { Job, Worker } from 'bullmq';
 import { eq, sql } from 'drizzle-orm';
-import { inject, injectable } from 'tsyringe';
 
 import Config from '~/configs';
+import { SubscriptionReadRepository } from '~/modules/subscription/infra/persistence/repository/read';
 import { db } from '~/shared/infra/db/config/config';
 import { subscriptions } from '~/shared/infra/db/schemas/subscriptions';
 import { users } from '~/shared/infra/db/schemas/users';
 import { Subscription } from '~/shared/infra/db/types';
 import { QUEUE_NAMES, subscriptionExpiryQueue } from '~/shared/infra/queue';
 import { useLogger } from '~/shared/packages/logger/logger';
-import { SubscriptionReadRepository } from '~/modules/subscription/infra/persistence/repository/read';
 
 const logger = useLogger('SubscriptionExpiryWorker');
 
@@ -149,7 +148,7 @@ export async function handleSubscriptionExpiry(
 }
 
 // Process renewal for a subscription with auto-renewal enabled
-export async function processRenewal(
+async function processRenewal(
   subscription: Subscription,
   subscriptionReadRepository: SubscriptionReadRepository
 ): Promise<{ success: boolean; message: string; newEndDate?: Date }> {
