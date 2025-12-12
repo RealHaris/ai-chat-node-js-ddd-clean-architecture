@@ -6,7 +6,7 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
 *   **Authentication & Authorization**
     *   Secure JWT-based auth (Access + Refresh Tokens).
@@ -30,7 +30,7 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
     *   **CQRS**: Segregated Read and Write repositories for optimized performance.
     *   **Dependency Injection**: Managed via 	syringe.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 *   **Runtime**: Node.js (>= 18.12.0)
 *   **Language**: TypeScript
@@ -43,7 +43,7 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
 *   **Bundler**: esbuild
 *   **Testing**: TSX, Native Fetch (Custom Test Runner)
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
     ```
     src/
@@ -61,7 +61,7 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
     └── worker.ts                # Background Worker Entry Point
     ``` 
 
-## ⚡ Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -72,24 +72,24 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
 ### Installation
 
 1.  **Clone the repository**
-    `ash
+    `ash
     git clone https://github.com/RealHaris/ai-chat-node-js-ddd-clean-architecture.git
     cd ai-chat-node-js-ddd-clean-architecture
     `
 
 2.  **Install dependencies**
-    `ash
+    `ash
     npm install
     `
 
 3.  **Environment Setup**
     Copy .env.example to .env and configure your database/redis credentials.
-    `ash
+    `ash
     cp .env.example .env
     `
 
 4.  **Database Setup**
-    `ash
+    `ash
     # Generate migrations
     npm run migration:generate
     
@@ -103,20 +103,20 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
 ### Running the Application
 
 *   **Development Server**
-    `ash
+    `ash
     npm run dev
     `
 *   **Background Worker** (Required for subscription expiry)
-    `ash
+    `ash
     npm run worker:dev
     `
 *   **Production Build**
-    `ash
+    `ash
     npm run build
     npm start
     `
 
-## 🧪 Testing
+## Testing
 
 The project includes a comprehensive custom test runner covering Unit, Integration, and E2E scenarios.
 
@@ -128,7 +128,7 @@ The project includes a comprehensive custom test runner covering Unit, Integrati
 | `npm run test -- postman` | Run happy-path scenarios matching the Postman collection |
 | `npm run test:auth` | Run specific module tests (auth, user, chat, etc.) |
 
-## 💻 Development Commands
+## Development Commands
 
 | Command | Description |
 | :--- | :--- |
@@ -136,6 +136,6 @@ The project includes a comprehensive custom test runner covering Unit, Integrati
 | `npm run lint:fix` | Fix ESLint errors |
 | `npm run format` | Format code with Prettier |
 | `npm run type-check` | Run TypeScript type checking |
-## 📝 License
+## License
 
 This project is private.
