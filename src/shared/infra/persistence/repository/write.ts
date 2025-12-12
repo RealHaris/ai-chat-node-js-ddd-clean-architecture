@@ -18,14 +18,14 @@ export abstract class BaseWriteRepository<
   AggregateRootType extends PolymorphicAggregate = PolymorphicAggregate,
 > {
   protected readonly table: TableType;
-  protected readonly db: PostgresJsDatabase<any>;
+  protected readonly db: PostgresJsDatabase<Record<string, unknown>>;
 
   constructor(table: TableType, dbInstance = db) {
     this.table = table;
     this.db = dbInstance;
   }
 
-  async getById(id: Aggregate<WriteAttributesType>['id']): Promise<any> {
+  async getById(id: Aggregate<WriteAttributesType>['id']): Promise<WriteAttributesType> {
     const result = await this.db
       .select()
       .from(this.table)
@@ -39,7 +39,7 @@ export abstract class BaseWriteRepository<
     return result[0];
   }
 
-  async save(aggregateRoot: AggregateRootType): Promise<any> {
+  async save(aggregateRoot: AggregateRootType): Promise<WriteAttributesType> {
     const values = this.toValues(aggregateRoot);
 
     const result = await this.db.insert(this.table).values(values).returning();
@@ -47,12 +47,12 @@ export abstract class BaseWriteRepository<
     return result[0];
   }
 
-  async update(aggregateRoot: AggregateRootType): Promise<any> {
+  async update(aggregateRoot: AggregateRootType): Promise<WriteAttributesType> {
     return await this.updateAny(aggregateRoot);
   }
 
-  async updateAny(aggregateRoot: AggregateRootType): Promise<any> {
-    if ('modifiable' in aggregateRoot && !(aggregateRoot as any).modifiable) {
+  async updateAny(aggregateRoot: AggregateRootType): Promise<WriteAttributesType> {
+    if ('modifiable' in aggregateRoot && !(aggregateRoot as { modifiable?: boolean }).modifiable) {
       throw new StateError('Object is on an unmodifiable status');
     }
 
@@ -90,7 +90,7 @@ export abstract class BaseWriteRepository<
     return await callback();
   }
 
-  protected toAggregateRoot(model: any): AggregateRootType {
+  protected toAggregateRoot(model: unknown): AggregateRootType {
     return Object.assign(model);
   }
 

@@ -1,4 +1,4 @@
-export function isArray(obj: any): boolean {
+export function isArray(obj: unknown): boolean {
   if (typeof Array.isArray === 'undefined') {
     return Object.prototype.toString.call(obj) === '[object Array]';
   } else {
@@ -6,29 +6,29 @@ export function isArray(obj: any): boolean {
   }
 }
 
-export const isUndefined = (obj: any): obj is undefined =>
+export const isUndefined = (obj: unknown): obj is undefined =>
   typeof obj === 'undefined';
 
-export const isObject = (fn: any): fn is object =>
+export const isObject = (fn: unknown): fn is object =>
   !isNil(fn) && typeof fn === 'object';
 
-export const isFunction = (val: any): val is (...args: any[]) => any =>
+export const isFunction = (val: unknown): val is (...args: unknown[]) => unknown =>
   typeof val === 'function';
 
-export const isString = (val: any): val is string => typeof val === 'string';
+export const isString = (val: unknown): val is string => typeof val === 'string';
 
-export const isNumber = (val: any): val is number => typeof val === 'number';
+export const isNumber = (val: unknown): val is number => typeof val === 'number';
 
-export const isConstructor = (val: any): boolean => val === 'constructor';
+export const isConstructor = (val: unknown): boolean => val === 'constructor';
 
-export const isNil = (val: any): val is null | undefined =>
+export const isNil = (val: unknown): val is null | undefined =>
   isUndefined(val) || val === null;
 
-export const isEmpty = (array: any): boolean => !(array && array.length > 0);
+export const isEmpty = (array: unknown): boolean => !(array && array.length > 0);
 
-export const isSymbol = (val: any): val is symbol => typeof val === 'symbol';
+export const isSymbol = (val: unknown): val is symbol => typeof val === 'symbol';
 
-export const isPlainObject = (fn: any): fn is object => {
+export const isPlainObject = (fn: unknown): fn is object => {
   if (!isObject(fn)) {
     return false;
   }

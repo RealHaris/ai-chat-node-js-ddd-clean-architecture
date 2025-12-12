@@ -152,7 +152,16 @@ export class UserController extends BaseController {
     res: express.Response
   ): Promise<void> => {
     try {
-      const users = await this.userGetAllUseCase.execute();
+      const result = await this.userGetAllUseCase.execute();
+
+      if (result.isFail()) {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          error: result.error(),
+        });
+        return;
+      }
+
+      const users = result.value();
 
       // Remove passwords from response
       const usersWithoutPassword = users.map(user => {

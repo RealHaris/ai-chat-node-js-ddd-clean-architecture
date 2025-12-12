@@ -9,13 +9,13 @@ import {
 export type LogLevel = 'log' | 'error' | 'warn' | 'debug' | 'verbose' | 'fatal';
 
 export interface ILogger {
-  log(message: any, ...optionalParams: any[]): any;
-  error(message: any, ...optionalParams: any[]): any;
-  warn(message: any, ...optionalParams: any[]): any;
-  debug?(message: any, ...optionalParams: any[]): any;
-  verbose?(message: any, ...optionalParams: any[]): any;
-  fatal?(message: any, ...optionalParams: any[]): any;
-  setLogLevels?(levels: LogLevel[]): any;
+  log(message: unknown, ...optionalParams: unknown[]): void;
+  error(message: unknown, ...optionalParams: unknown[]): void;
+  warn(message: unknown, ...optionalParams: unknown[]): void;
+  debug?(message: unknown, ...optionalParams: unknown[]): void;
+  verbose?(message: unknown, ...optionalParams: unknown[]): void;
+  fatal?(message: unknown, ...optionalParams: unknown[]): void;
+  setLogLevels?(levels: LogLevel[]): void;
 }
 
 export const LOGGER_SYMBOLS = Symbol.for('Logger');
@@ -48,7 +48,7 @@ export class Logger implements ILogger {
     }
   }
 
-  log(message: any, ...optionalParams: any[]) {
+  log(message: unknown, ...optionalParams: unknown[]) {
     const { messages, context } = this.getContextAndMessagesToPrint([
       message,
       ...optionalParams,
@@ -57,15 +57,17 @@ export class Logger implements ILogger {
     this.printMessages(messages, context, 'log');
   }
 
-  error(message: any, ...optionalParams: any[]) {
+  error(message: unknown, ...optionalParams: unknown[]) {
     const { messages, context, stack } =
       this.getContextAndStackAndMessagesToPrint([message, ...optionalParams]);
 
     this.printMessages(messages, context, 'error', 'stderr');
-    this.printStackTrace(stack!);
+    if (stack) {
+      this.printStackTrace(stack);
+    }
   }
 
-  warn(message: any, ...optionalParams: any[]) {
+  warn(message: unknown, ...optionalParams: unknown[]) {
     const { messages, context } = this.getContextAndMessagesToPrint([
       message,
       ...optionalParams,
@@ -73,7 +75,7 @@ export class Logger implements ILogger {
     this.printMessages(messages, context, 'warn');
   }
 
-  debug(message: any, ...optionalParams: any[]) {
+  debug(message: unknown, ...optionalParams: unknown[]) {
     const { messages, context } = this.getContextAndMessagesToPrint([
       message,
       ...optionalParams,
@@ -81,7 +83,7 @@ export class Logger implements ILogger {
     this.printMessages(messages, context, 'debug');
   }
 
-  verbose(message: any, ...optionalParams: any[]) {
+  verbose(message: unknown, ...optionalParams: unknown[]) {
     const { messages, context } = this.getContextAndMessagesToPrint([
       message,
       ...optionalParams,
@@ -89,7 +91,7 @@ export class Logger implements ILogger {
     this.printMessages(messages, context, 'verbose');
   }
 
-  fatal(message: any, ...optionalParams: any[]) {
+  fatal(message: unknown, ...optionalParams: unknown[]) {
     const { messages, context } = this.getContextAndMessagesToPrint([
       message,
       ...optionalParams,
@@ -139,7 +141,7 @@ export class Logger implements ILogger {
   protected updateAndGetTimestampDiff(): string {
     const includeTimestamp = Logger.lastTimestampAt && this.options?.timestamp;
     const result = includeTimestamp
-      ? this.formatTimestampDiff(Date.now() - Logger.lastTimestampAt!)
+      ? this.formatTimestampDiff(Date.now() - (Logger.lastTimestampAt || 0))
       : '';
     Logger.lastTimestampAt = Date.now();
     return result;
@@ -235,7 +237,11 @@ export class Logger implements ILogger {
       return false;
     }
 
-    return /^(.)+\n\s+at .+:\d+:\d+/.test(stack!);
+    if (!stack) {
+      return false;
+    }
+
+    return /^(.)+\n\s+at .+:\d+:\d+/.test(stack);
   }
 
   private getContextAndMessagesToPrint(args: unknown[]) {

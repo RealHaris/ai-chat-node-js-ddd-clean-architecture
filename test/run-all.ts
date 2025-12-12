@@ -9,6 +9,7 @@ import { runBundleTierTests } from './bundle-tier.test';
 import { runChatTests } from './chat.test';
 import { runE2ETests } from './e2e.test';
 import { runAdvancedE2ETests } from './advanced-e2e.test';
+import { runPostmanHappyPathsTests } from './postman-happy-paths.test';
 import { runSubscriptionTests } from './subscription.test';
 import { runUserTests } from './user.test';
 import { TestSummary, logInfo, logSection, printFinalSummary } from './utils';
@@ -79,12 +80,17 @@ async function runAllTests(): Promise<void> {
       results.push({ name: 'Advanced E2E Tests', summary: advancedSummary });
     }
 
+    if (shouldRun('postman')) {
+      const postmanSummary = await runPostmanHappyPathsTests();
+      results.push({ name: 'Postman Happy Paths Tests', summary: postmanSummary });
+    }
+
     // Print final summary
     if (results.length > 0) {
       printFinalSummary(results);
     } else {
       logInfo('No tests were run. Use --all or specify test names.');
-      logInfo('Available: auth, user, bundle, subscription, chat, e2e, advanced');
+      logInfo('Available: auth, user, bundle, subscription, chat, e2e, advanced, postman');
     }
   } catch (error) {
     console.error('\nTest runner encountered an error:', error);

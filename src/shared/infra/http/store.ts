@@ -5,9 +5,9 @@ export interface IStore {
   url: string;
 
   // keep-sorted start
-  admin?: any;
-  customer?: any;
-  user?: any;
+  admin?: Record<string, unknown>;
+  customer?: Record<string, unknown>;
+  user?: Record<string, unknown>;
 }
 
 const storage = new AsyncLocalStorage<IStore>();

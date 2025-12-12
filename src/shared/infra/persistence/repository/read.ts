@@ -1,5 +1,5 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { AnyPgTable } from 'drizzle-orm/pg-core';
+import { AnyPgTable, InferSelectModel } from 'drizzle-orm/pg-core';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { NotFoundError } from '~/shared/infra/error';
@@ -7,34 +7,34 @@ import { db } from '~/shared/infra/db/config/config';
 
 export abstract class BaseReadRepository<TableType extends AnyPgTable> {
   protected readonly table: TableType;
-  protected readonly db: PostgresJsDatabase<any>;
+  protected readonly db: PostgresJsDatabase<Record<string, unknown>>;
 
   constructor(table: TableType, dbInstance = db) {
     this.table = table;
     this.db = dbInstance;
   }
 
-  async get(id: string): Promise<any> {
+  async get(id: string): Promise<InferSelectModel<TableType>> {
     const result = await this.db
       .select()
       .from(this.table)
-      .where(eq((this.table as any).id, id))
+      .where(eq((this.table as unknown as { id: unknown }).id, id))
       .limit(1);
 
     if (!result[0]) {
       throw new NotFoundError(
-        `Could not find ${(this.table as any).name || 'unknown'} ${id}`
+        `Could not find ${(this.table as unknown as { name?: string }).name || 'unknown'} ${id}`
       );
     }
 
     return result[0];
   }
 
-  async getAny(id: string): Promise<any | null> {
+  async getAny(id: string): Promise<InferSelectModel<TableType> | null> {
     const result = await this.db
       .select()
       .from(this.table)
-      .where(eq((this.table as any).id, id))
+      .where(eq((this.table as unknown as { id: unknown }).id, id))
       .limit(1);
 
     return result[0] || null;
@@ -42,11 +42,11 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
 
   async getAll(
     options: { limit?: number; offset?: number } = {}
-  ): Promise<any[]> {
+  ): Promise<InferSelectModel<TableType>[]> {
     const query = this.db
       .select()
       .from(this.table)
-      .orderBy(desc((this.table as any).createdAt));
+      .orderBy(desc((this.table as unknown as { createdAt: unknown }).createdAt));
 
     if (options.limit) {
       query.limit(options.limit);
@@ -59,7 +59,7 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
     return query;
   }
 
-  async first(whereClause: Record<string, any> = {}): Promise<any | null> {
+  async first(whereClause: Record<string, unknown> = {}): Promise<InferSelectModel<TableType> | null> {
     const result = await this.firstAny(whereClause);
 
     if (!result) {
@@ -71,9 +71,9 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
     return result;
   }
 
-  async firstAny(whereClause: Record<string, any> = {}): Promise<any | null> {
+  async firstAny(whereClause: Record<string, unknown> = {}): Promise<InferSelectModel<TableType> | null> {
     const conditions = Object.entries(whereClause).map(([key, value]) =>
-      eq((this.table as any)[key], value)
+      eq((this.table as unknown as Record<string, unknown>)[key], value)
     );
 
     const whereCondition =
@@ -83,18 +83,18 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
       .select()
       .from(this.table)
       .where(whereCondition)
-      .orderBy(desc((this.table as any).createdAt))
+      .orderBy(desc((this.table as unknown as { createdAt: unknown }).createdAt))
       .limit(1);
 
     return result[0] || null;
   }
 
   async where(
-    whereClause: Record<string, any> = {},
+    whereClause: Record<string, unknown> = {},
     options: { limit?: number; offset?: number } = {}
-  ): Promise<any[]> {
+  ): Promise<InferSelectModel<TableType>[]> {
     const conditions = Object.entries(whereClause).map(([key, value]) =>
-      eq((this.table as any)[key], value)
+      eq((this.table as unknown as Record<string, unknown>)[key], value)
     );
 
     const whereCondition =
@@ -104,7 +104,7 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
       .select()
       .from(this.table)
       .where(whereCondition)
-      .orderBy(desc((this.table as any).createdAt));
+      .orderBy(desc((this.table as unknown as { createdAt: unknown }).createdAt));
 
     if (options.limit) {
       query.limit(options.limit);
@@ -117,7 +117,7 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
     return query;
   }
 
-  async count(whereClause: Record<string, any> = {}): Promise<number> {
+  async count(whereClause: Record<string, unknown> = {}): Promise<number> {
     const conditions = Object.entries(whereClause).map(([key, value]) =>
       eq((this.table as any)[key], value)
     );

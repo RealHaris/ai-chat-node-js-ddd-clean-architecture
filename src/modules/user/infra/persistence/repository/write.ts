@@ -10,7 +10,7 @@ import { BaseWriteRepository } from '~/shared/infra/persistence/repository/write
 
 @singleton()
 export class UserWriteRepository
-  extends BaseWriteRepository<typeof users, any>
+  extends BaseWriteRepository<typeof users, User>
   implements IUserWriteRepository
 {
   constructor() {

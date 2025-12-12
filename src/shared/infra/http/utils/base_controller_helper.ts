@@ -1,25 +1,26 @@
 import { isArray } from '~/shared/common/utils/validation';
 
-export function removeNulls(obj: any): any {
+export function removeNulls(obj: unknown): unknown {
   if (obj === null) {
     return undefined;
   }
 
   if (isArray(obj)) {
-    return obj.map(removeNulls);
+    return (obj as unknown[]).map(removeNulls);
   }
 
   if (typeof obj === 'object' && obj !== null) {
-    const cleaned: any = {};
-    for (const key of Object.keys(obj)) {
-      if (obj[key] === null) {
+    const cleaned: Record<string, unknown> = {};
+    for (const key of Object.keys(obj as Record<string, unknown>)) {
+      const value = (obj as Record<string, unknown>)[key];
+      if (value === null) {
         cleaned[key] = undefined;
-      } else if (isArray(obj[key])) {
-        cleaned[key] = obj[key].map(removeNulls);
-      } else if (typeof obj[key] === 'object') {
-        cleaned[key] = removeNulls(obj[key]);
+      } else if (isArray(value)) {
+        cleaned[key] = (value as unknown[]).map(removeNulls);
+      } else if (typeof value === 'object') {
+        cleaned[key] = removeNulls(value);
       } else {
-        cleaned[key] = obj[key];
+        cleaned[key] = value;
       }
     }
     return cleaned;

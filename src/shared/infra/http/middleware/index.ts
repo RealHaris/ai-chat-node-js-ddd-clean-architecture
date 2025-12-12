@@ -24,13 +24,13 @@ const registerApplicationMiddlewares = async (app: express.Application) => {
   // Request ID middleware
   app.use(
     (
-      req: express.Request,
+      req: express.Request & { requestId?: string },
       res: express.Response,
       next: express.NextFunction
     ) => {
       const reqId = `${os.hostname}-${uuidv4()}`;
       res.setHeader('App-X-RequestId', reqId);
-      (req as any).requestId = reqId;
+      req.requestId = reqId;
       next();
     }
   );

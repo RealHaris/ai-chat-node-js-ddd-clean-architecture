@@ -73,8 +73,10 @@ async function ensureUsersExist(): Promise<void> {
 
     const response = await apiRequest<{
       data?: {
-        accessToken: string;
-        refreshToken: string;
+        tokens: {
+          accessToken: string;
+          refreshToken: string;
+        };
         user: { id: string; email: string };
       };
     }>('/v1/auth/register', {
@@ -87,8 +89,8 @@ async function ensureUsersExist(): Promise<void> {
         id: response.data.data.user.id,
         email,
         password,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken,
+        accessToken: response.data.data.tokens.accessToken,
+        refreshToken: response.data.data.tokens.refreshToken,
       };
       logInfo(`Created regular user for user tests: ${email}`);
     }
@@ -101,8 +103,10 @@ async function ensureUsersExist(): Promise<void> {
 
     const response = await apiRequest<{
       data?: {
-        accessToken: string;
-        refreshToken: string;
+        tokens: {
+          accessToken: string;
+          refreshToken: string;
+        };
         user: { id: string; email: string };
       };
     }>('/v1/auth/register', {
@@ -115,8 +119,8 @@ async function ensureUsersExist(): Promise<void> {
         id: response.data.data.user.id,
         email,
         password,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken,
+        accessToken: response.data.data.tokens.accessToken,
+        refreshToken: response.data.data.tokens.refreshToken,
       };
       logInfo(`Created admin user for user tests: ${email}`);
       logWarning(
@@ -434,6 +438,24 @@ export async function runUserTests(): Promise<TestSummary> {
 
         assertStatusCode(response, 200, 'Admin should get 200');
         assertNotNull(response.data.data, 'Should have stats data');
+        
+        // Verify specific fields requested in prompt
+        const stats = response.data.data;
+        assertHasProperty(stats, 'user', 'Should have user info');
+        assertHasProperty(stats, 'quota', 'Should have quota info');
+        assertHasProperty(stats, 'subscriptions', 'Should have subscriptions info');
+        assertHasProperty(stats, 'messages', 'Should have messages info');
+        
+        // Verify subscriptions structure
+        assertHasProperty(stats.subscriptions, 'total', 'Should have total subscriptions');
+        assertHasProperty(stats.subscriptions, 'active', 'Should have active subscriptions');
+        assertHasProperty(stats.subscriptions, 'totalSpent', 'Should have total spent');
+        assertHasProperty(stats.subscriptions, 'list', 'Should have subscriptions list');
+        
+        // Verify messages structure
+        assertHasProperty(stats.messages, 'total', 'Should have total messages');
+        assertHasProperty(stats.messages, 'completed', 'Should have completed messages');
+        assertHasProperty(stats.messages, 'failed', 'Should have failed messages');
       },
     },
 

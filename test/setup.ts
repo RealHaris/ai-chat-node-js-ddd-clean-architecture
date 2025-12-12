@@ -7,7 +7,7 @@ import 'reflect-metadata';
 
 import { createApp } from '../src/app';
 
-let server: any = null;
+let server: import('http').Server | null = null;
 
 // Start server for tests
 export async function startTestServer(): Promise<void> {
@@ -56,7 +56,7 @@ export async function startTestServer(): Promise<void> {
 // Stop server after tests
 export async function stopTestServer(): Promise<void> {
   if (server) {
-    server.close((err: any) => {
+    server.close((err?: Error) => {
       if (err) {
         console.error('Error closing test server:', err);
       } else {

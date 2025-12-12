@@ -3,7 +3,7 @@ import express from 'express';
 import { useLogger } from '~/shared/packages/logger/logger';
 
 const expressLogger = async (
-  req: express.Request,
+  req: express.Request & { startTime?: number },
   res: express.Response,
   next: express.NextFunction
 ) => {
@@ -14,7 +14,7 @@ const expressLogger = async (
   logger.log(req.method, req.originalUrl);
 
   // Store start time for error logging
-  (req as any).startTime = start;
+  req.startTime = start;
 
   try {
     await next();

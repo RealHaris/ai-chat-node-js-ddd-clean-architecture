@@ -10,7 +10,7 @@ import { BaseWriteRepository } from '~/shared/infra/persistence/repository/write
 @singleton()
 export class SubscriptionWriteRepository extends BaseWriteRepository<
   typeof subscriptions,
-  any
+  Subscription
 > {
   constructor() {
     super(subscriptions, db);

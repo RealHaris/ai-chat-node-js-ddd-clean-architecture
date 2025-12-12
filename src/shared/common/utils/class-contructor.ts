@@ -1,2 +1,1 @@
-// tslint:disable:no-any
-export type ClassConstructor<TReturn> = new (...args: any[]) => TReturn;
+export type ClassConstructor<TReturn> = new (...args: unknown[]) => TReturn;

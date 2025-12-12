@@ -10,7 +10,7 @@ import { BaseWriteRepository } from '~/shared/infra/persistence/repository/write
 @singleton()
 export class BundleTierWriteRepository extends BaseWriteRepository<
   typeof bundleTiers,
-  any
+  BundleTier
 > {
   constructor() {
     super(bundleTiers, db);

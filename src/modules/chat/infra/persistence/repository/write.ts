@@ -25,7 +25,7 @@ interface UpdateChatMessageInput {
 @singleton()
 export class ChatMessageWriteRepository extends BaseWriteRepository<
   typeof chatMessages,
-  any
+  ChatMessage
 > {
   constructor() {
     super(chatMessages, db);
