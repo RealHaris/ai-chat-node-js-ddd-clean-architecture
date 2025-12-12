@@ -45,23 +45,21 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
 
 ## 🏗️ Architecture Overview
 
-The project follows a strict modular structure:
-
-`
-src/
-├── modules/                 # Domain Modules
-│   ├── auth/                # Authentication & Token Management
-│   ├── user/                # User Profile & Admin Management
-│   ├── subscription/        # Bundles, Subscriptions, Quotas
-│   └── chat/                # Chat Messages & History
-│       ├── domain/          # Entities, Events, Interfaces
-│       ├── application/     # Use Cases, DTOs
-│       └── infra/           # Controllers, Repositories
-├── shared/                  # Shared Kernel
-│   ├── infra/               # DB, Redis, Queue, Cron, HTTP
-│   └── core/                # Base Classes (Entity, Result, etc.)
-└── worker.ts                # Background Worker Entry Point
-`
+    ```
+    src/
+    ├── modules/                 # Domain Modules
+    │   ├── auth/                # Authentication & Token Management
+    │   ├── user/                # User Profile & Admin Management
+    │   ├── subscription/        # Bundles, Subscriptions, Quotas
+    │   └── chat/                # Chat Messages & History
+    │       ├── domain/          # Entities, Events, Interfaces
+    │       ├── application/     # Use Cases, DTOs
+    │       └── infra/           # Controllers, Repositories
+    ├── shared/                  # Shared Kernel
+    │   ├── infra/               # DB, Redis, Queue, Cron, HTTP
+    │   └── core/                # Base Classes (Entity, Result, etc.)
+    └── worker.ts                # Background Worker Entry Point
+    ``` 
 
 ## ⚡ Getting Started
 
