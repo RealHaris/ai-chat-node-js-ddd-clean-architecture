@@ -1,13 +1,13 @@
-import 'reflect-metadata';
 import { eq } from 'drizzle-orm';
+import 'reflect-metadata';
 import { v4 as uuidv4 } from 'uuid';
 
+import { SubscriptionReadRepository } from '~/modules/subscription/infra/persistence/repository/read';
 import { db } from '~/shared/infra/db/config/config';
+import { bundleTiers } from '~/shared/infra/db/schemas/bundle_tiers';
 import { subscriptions } from '~/shared/infra/db/schemas/subscriptions';
 import { users } from '~/shared/infra/db/schemas/users';
-import { bundleTiers } from '~/shared/infra/db/schemas/bundle_tiers';
 import { handleSubscriptionExpiry } from '~/shared/infra/queue/workers/subscription_expiry.worker';
-import { SubscriptionReadRepository } from '~/modules/subscription/infra/persistence/repository/read';
 
 async function runSingleSubscriptionE2ETest() {
   console.log('🚀 Starting Single Subscription E2E Test...');
