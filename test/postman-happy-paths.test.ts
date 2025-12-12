@@ -10,14 +10,12 @@ import {
   randomEmail,
   runTestSuite,
   assertStatusCode,
-  assertHasProperty,
   assertNotNull,
   assertTrue,
   assertEqual,
   TestSummary,
   logInfo,
   SEEDED_DATA,
-  testStore,
 } from './utils';
 
 import { db } from '../src/shared/infra/db/config/config';

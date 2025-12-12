@@ -40,7 +40,7 @@ A robust, production-ready Node.js backend service built with **Domain-Driven De
 *   **Caching/Queues**: Redis, BullMQ
 *   **Scheduling**: Node-cron
 *   **Validation**: Zod
-*   **Bundler**: Rspack (via rsbuild)
+*   **Bundler**: esbuild
 *   **Testing**: TSX, Native Fetch (Custom Test Runner)
 
 ## 🏗️ Architecture Overview
@@ -75,7 +75,7 @@ src/
 
 1.  **Clone the repository**
     `ash
-    git clone git@github-personal:RealHaris/ai-chat-node-js-ddd-clean-architecture.git
+    git clone https://github.com/RealHaris/ai-chat-node-js-ddd-clean-architecture.git
     cd ai-chat-node-js-ddd-clean-architecture
     `
 
@@ -124,24 +124,20 @@ The project includes a comprehensive custom test runner covering Unit, Integrati
 
 | Command | Description |
 | :--- | :--- |
-| 
-pm test | Run **ALL** tests (Auth, User, Bundle, Sub, Chat, E2E, Advanced, Postman) |
-| 
-pm run test -- e2e | Run standard End-to-End user journeys |
-| 
-pm run test -- advanced | Run edge cases (Quota limits, Worker simulation, Cron reset) |
-| 
-pm run test -- postman | Run happy-path scenarios matching the Postman collection |
-| 
-pm run test -- auth | Run specific module tests (auth, user, chat, etc.) |
+| `npm run test` | Run **ALL** tests (Auth, User, Bundle, Sub, Chat, E2E, Advanced, Postman) |
+| `npm run test:e2e` | Run standard End-to-End user journeys |
+| `npm run test -- advanced` | Run edge cases (Quota limits, Worker simulation, Cron reset) |
+| `npm run test -- postman` | Run happy-path scenarios matching the Postman collection |
+| `npm run test:auth` | Run specific module tests (auth, user, chat, etc.) |
 
-## 📜 Documentation
+## 💻 Development Commands
 
-Detailed documentation is available in the docs/ folder:
-*   docs/nodejs-ddd-clean-architecture.mdc: Deep dive into the architectural decisions.
-*   docs/development-workflow.mdc: Git flow and coding standards.
-*   docs/drizzle-migration.mdc: Database management guide.
-
+| Command | Description |
+| :--- | :--- |
+| `npm run lint` | Run ESLint |
+| `npm run lint:fix` | Fix ESLint errors |
+| `npm run format` | Format code with Prettier |
+| `npm run type-check` | Run TypeScript type checking |
 ## 📝 License
 
 This project is private.

@@ -11,7 +11,6 @@ import {
   randomEmail,
   runTestSuite,
   assertStatusCode,
-  assertNotNull,
   assertTrue,
   assertEqual,
   TestSummary,
