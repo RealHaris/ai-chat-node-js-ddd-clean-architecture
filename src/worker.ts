@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import { initDB } from '~/shared/infra/db/config/config';
 import { useLogger } from '~/shared/packages/logger/logger';
 import { createSubscriptionExpiryWorker } from '~/shared/infra/queue/workers/subscription_expiry.worker';
 import { startFreeTierResetJob } from '~/shared/infra/cron/jobs/free_tier_reset.job';
@@ -7,15 +8,20 @@ import { startFreeTierResetJob } from '~/shared/infra/cron/jobs/free_tier_reset.
 const logger = useLogger('WorkerProcess');
 
 async function bootstrap() {
-  logger.log('Starting worker process...');
+  logger.log(`Starting worker process at ${new Date().toISOString()}...`);
+
+  // Initialize Database
+  await initDB();
 
   // Start BullMQ workers
   logger.log('Starting subscription expiry worker...');
   const subscriptionExpiryWorker = createSubscriptionExpiryWorker();
+  logger.log('Worker Service Started');
 
   // Start cron jobs
   logger.log('Starting cron jobs...');
   const freeTierResetTask = startFreeTierResetJob();
+  logger.log('Cron Service Started');
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {

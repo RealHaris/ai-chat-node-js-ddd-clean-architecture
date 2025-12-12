@@ -1,5 +1,6 @@
 import { Job, Worker } from 'bullmq';
 import { eq, sql } from 'drizzle-orm';
+import { inject, injectable } from 'tsyringe';
 
 import Config from '~/configs';
 import { db } from '~/shared/infra/db/config/config';
@@ -8,6 +9,7 @@ import { users } from '~/shared/infra/db/schemas/users';
 import { Subscription } from '~/shared/infra/db/types';
 import { QUEUE_NAMES, subscriptionExpiryQueue } from '~/shared/infra/queue';
 import { useLogger } from '~/shared/packages/logger/logger';
+import { SubscriptionReadRepository } from '~/modules/subscription/infra/persistence/repository/read';
 
 const logger = useLogger('SubscriptionExpiryWorker');
 
@@ -58,15 +60,16 @@ function calculateDelayMs(endDate: Date): number {
   return Math.max(delay, 0); // Ensure non-negative delay
 }
 
-// Shift user to free tier
-async function shiftToFreeTier(
+// Handle subscription expiry (auto-renew OFF or payment failed)
+export async function handleSubscriptionExpiry(
   userId: string,
   subscriptionId: string,
-  reason: string
+  reason: string,
+  subscriptionReadRepository: SubscriptionReadRepository
 ): Promise<void> {
-  logger.log(`Shifting user ${userId} to free tier`, {
+  logger.log(`Handling expiry for subscription ${subscriptionId}`, {
     reason,
-    subscriptionId,
+    userId,
   });
 
   // Deactivate the subscription
@@ -79,26 +82,76 @@ async function shiftToFreeTier(
     })
     .where(eq(subscriptions.id, subscriptionId));
 
-  // Update user to free tier
-  await db
-    .update(users)
-    .set({
-      isFreeTier: true,
-      totalRemainingMessages: FREE_TIER_MONTHLY_MESSAGES,
-      latestBundleId: null,
-      latestBundleRemainingQuota: FREE_TIER_MONTHLY_MESSAGES,
-      latestBundleName: 'Free Tier',
-      latestBundleMaxMessages: FREE_TIER_MONTHLY_MESSAGES,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId));
+  // Get user to check current quota state
+  const userResult = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  const user = userResult[0];
+  if (!user) {
+    logger.error(`User ${userId} not found during expiry handling`);
+    return;
+  }
 
-  logger.log(`User ${userId} successfully shifted to free tier`);
+  // Calculate quota to remove
+  // If this was the latest bundle, we remove its specific remaining quota
+  // If not, we assume 0 (or could assume maxMessages if we tracked it, but we don't)
+  let quotaToRemove = 0;
+  if (user.latestBundleId === subscriptionId) {
+    quotaToRemove = user.latestBundleRemainingQuota || 0;
+  }
+
+  // Update total remaining messages
+  // Ensure we don't go below 0
+  const newTotal = Math.max(0, user.totalRemainingMessages - quotaToRemove);
+
+  // Find next active subscription to fallback to
+  // We exclude the one we just expired
+  const activeSubscriptions = await subscriptionReadRepository.findActiveByUserId(userId);
+  const nextLatest = activeSubscriptions.find(sub => sub.id !== subscriptionId);
+
+  if (nextLatest) {
+    // Fallback to next active bundle
+    logger.log(`Falling back to subscription ${nextLatest.id} for user ${userId}`);
+    
+    await db
+      .update(users)
+      .set({
+        totalRemainingMessages: newTotal,
+        latestBundleId: nextLatest.id,
+        // We set latest remaining to total because total now represents the sum of all remaining bundles
+        // and we treat the "latest" as the primary bucket for the aggregate
+        latestBundleRemainingQuota: newTotal, 
+        latestBundleName: nextLatest.bundleName,
+        latestBundleMaxMessages: nextLatest.bundleMaxMessages,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  } else {
+    // No other active bundles - shift to free tier
+    logger.log(`No active subscriptions left for user ${userId}, shifting to free tier`);
+    
+    await db
+      .update(users)
+      .set({
+        isFreeTier: true,
+        totalRemainingMessages: FREE_TIER_MONTHLY_MESSAGES,
+        latestBundleId: null,
+        latestBundleRemainingQuota: FREE_TIER_MONTHLY_MESSAGES,
+        latestBundleName: 'Free Tier',
+        latestBundleMaxMessages: FREE_TIER_MONTHLY_MESSAGES,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
 }
 
 // Process renewal for a subscription with auto-renewal enabled
-async function processRenewal(
-  subscription: Subscription
+export async function processRenewal(
+  subscription: Subscription,
+  subscriptionReadRepository: SubscriptionReadRepository
 ): Promise<{ success: boolean; message: string; newEndDate?: Date }> {
   const {
     id,
@@ -123,12 +176,17 @@ async function processRenewal(
       error: paymentResult.error,
     });
 
-    // Shift user to free tier on payment failure
-    await shiftToFreeTier(userId, id, `Payment failed: ${paymentResult.error}`);
+    // Handle expiry on payment failure
+    await handleSubscriptionExpiry(
+      userId, 
+      id, 
+      `Payment failed: ${paymentResult.error}`,
+      subscriptionReadRepository
+    );
 
     return {
       success: false,
-      message: `Payment failed for subscription ${id}: ${paymentResult.error}. User shifted to free tier.`,
+      message: `Payment failed for subscription ${id}: ${paymentResult.error}. Subscription expired.`,
     };
   }
 
@@ -145,26 +203,41 @@ async function processRenewal(
     })
     .where(eq(subscriptions.id, id));
 
-  // Add quota to user and update totalSpent
-  const isUnlimited = bundleMaxMessages === -1;
-
-  // Get current user quota
+  // Get current user state
   const userResult = await db
-    .select({ totalRemainingMessages: users.totalRemainingMessages })
+    .select()
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
+  
+  const user = userResult[0];
+  if (!user) {
+    throw new Error(`User ${userId} not found`);
+  }
 
-  const currentTotal = userResult[0]?.totalRemainingMessages || 0;
-  const newTotal = isUnlimited ? 999999999 : currentTotal + bundleMaxMessages;
+  // Calculate quota adjustments
+  // 1. Subtract old bundle's remaining quota (if it was the latest)
+  let quotaToRemove = 0;
+  if (user.latestBundleId === id) {
+    quotaToRemove = user.latestBundleRemainingQuota || 0;
+  }
+  
+  // 2. Add new bundle's quota
+  const isUnlimited = bundleMaxMessages === -1;
+  const currentTotal = user.totalRemainingMessages;
+  
+  // If unlimited, we set to a high number or sentinel. If not, we calculate.
+  // Logic: (Current Total - Old Remaining) + New Quota
+  const adjustedTotal = Math.max(0, currentTotal - quotaToRemove);
+  const newTotal = isUnlimited ? 999999999 : adjustedTotal + bundleMaxMessages;
 
   await db
     .update(users)
     .set({
       isFreeTier: false,
       totalRemainingMessages: newTotal,
-      latestBundleId: id,
-      latestBundleRemainingQuota: bundleMaxMessages,
+      latestBundleId: id, // Renewed bundle becomes/stays latest
+      latestBundleRemainingQuota: bundleMaxMessages, // Reset to full quota
       latestBundleName: bundleName,
       latestBundleMaxMessages: bundleMaxMessages,
       totalSpent: sql`${users.totalSpent} + ${bundlePrice}::decimal`,
@@ -214,6 +287,10 @@ async function scheduleNextExpiryJob(
 
 // Create the worker
 export function createSubscriptionExpiryWorker(): Worker {
+  // Instantiate repository manually since we are outside DI container scope in worker factory
+  // In a real app, we might want to setup DI container for worker too
+  const subscriptionReadRepository = new SubscriptionReadRepository();
+
   const worker = new Worker<SubscriptionExpiryJobData>(
     QUEUE_NAMES.SUBSCRIPTION_EXPIRY,
     async (job: Job<SubscriptionExpiryJobData>) => {
@@ -248,23 +325,24 @@ export function createSubscriptionExpiryWorker(): Worker {
 
       // Check autoRenewal flag
       if (!subscription.autoRenewal) {
-        // Auto-renewal is OFF - shift to free tier
+        // Auto-renewal is OFF - expire and fallback
         logger.log(
-          `Auto-renewal disabled for subscription ${subscriptionId}, shifting to free tier`
+          `Auto-renewal disabled for subscription ${subscriptionId}, expiring...`
         );
-        await shiftToFreeTier(
+        await handleSubscriptionExpiry(
           userId,
           subscriptionId,
-          'Auto-renewal disabled by user'
+          'Auto-renewal disabled by user',
+          subscriptionReadRepository
         );
         return {
           success: true,
-          message: `Subscription ${subscriptionId} expired. User shifted to free tier (auto-renewal disabled).`,
+          message: `Subscription ${subscriptionId} expired. Handled fallback logic.`,
         };
       }
 
       // Auto-renewal is ON - attempt payment and renewal
-      const result = await processRenewal(subscription);
+      const result = await processRenewal(subscription, subscriptionReadRepository);
 
       if (result.success && result.newEndDate) {
         // Schedule the next expiry job
