@@ -64,7 +64,7 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
 
     if (!result) {
       throw new NotFoundError(
-        `Could not find ${(this.table as any).name || 'unknown'} ${JSON.stringify(whereClause)}`
+        `Could not find ${(this.table as unknown as { name?: string }).name || 'unknown'} ${JSON.stringify(whereClause)}`
       );
     }
 
@@ -119,7 +119,7 @@ export abstract class BaseReadRepository<TableType extends AnyPgTable> {
 
   async count(whereClause: Record<string, unknown> = {}): Promise<number> {
     const conditions = Object.entries(whereClause).map(([key, value]) =>
-      eq((this.table as any)[key], value)
+      eq((this.table as unknown as Record<string, unknown>)[key], value)
     );
 
     const whereCondition =

@@ -29,11 +29,11 @@ export abstract class BaseWriteRepository<
     const result = await this.db
       .select()
       .from(this.table)
-      .where(eq((this.table as any).id, id))
+      .where(eq((this.table as unknown as { id: unknown }).id, id))
       .limit(1);
 
     if (!result[0]) {
-      throw new AggregateNotFound((this.table as any).name || 'unknown', id);
+      throw new AggregateNotFound((this.table as unknown as { name?: string }).name || 'unknown', id);
     }
 
     return result[0];
@@ -63,12 +63,12 @@ export abstract class BaseWriteRepository<
         ...values,
         updatedAt: new Date(),
       })
-      .where(eq((this.table as any).id, values.id))
+      .where(eq((this.table as unknown as { id: unknown }).id, values.id))
       .returning();
 
     if (!result[0]) {
       throw new NotFoundError(
-        `Failed to update ${(this.table as any).name || 'unknown'}`
+        `Failed to update ${(this.table as unknown as { name?: string }).name || 'unknown'}`
       );
     }
 
@@ -78,7 +78,7 @@ export abstract class BaseWriteRepository<
   async delete(id: Aggregate<WriteAttributesType>['id']): Promise<boolean> {
     const result = await this.db
       .delete(this.table)
-      .where(eq((this.table as any).id, id))
+      .where(eq((this.table as unknown as { id: unknown }).id, id))
       .returning();
 
     return result.length > 0;
